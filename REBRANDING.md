@@ -1,6 +1,6 @@
 # Berdaya Agent Rebranding Summary
 
-This document summarizes the rebrand from **Hermes Agent** (Nous Research) to **Berdaya Agent** (Berdaya AI) in the `adrinant/berdaya-agent` fork.
+This document summarizes the rebrand from **Hermes Agent** (Nous Research) to **Berdaya Agent** (Berdaya AI) in the `berdaya/berdaya-agent` fork.
 
 **Status:** Complete for product-facing surfaces. Internal Python module names (`hermes_cli`, `HERMES_HOME`, etc.) are intentionally unchanged to avoid a large breaking refactor.
 
@@ -11,7 +11,7 @@ This document summarizes the rebrand from **Hermes Agent** (Nous Research) to **
 | Commit | Summary |
 |--------|---------|
 | `bdea53811` | Bulk rebrand: product name, `berdaya` CLI, `~/.berdaya` home, repo URLs |
-| `1bddff1b2` | Fix broken rebrand identifiers; point desktop updates at `adrinant/berdaya-agent` |
+| `1bddff1b2` | Fix broken rebrand identifiers; point desktop updates at `berdaya/berdaya-agent` |
 | `1e463e049` | Replace app and UI brand assets with Berdaya icon |
 | `8f7eff200` | Repair 829 identifier sites broken by bulk string replace |
 | `5c65c30be` | Remove user-facing `hermes` alias from install scripts |
@@ -24,7 +24,7 @@ This document summarizes the rebrand from **Hermes Agent** (Nous Research) to **
 ## 1. Product name and repository
 
 - User-facing name: **Hermes Agent** → **Berdaya Agent**
-- GitHub: **NousResearch/hermes-agent** → **adrinant/berdaya-agent**
+- GitHub: **NousResearch/hermes-agent** → **berdaya/berdaya-agent**
 - Install scripts, bootstrap URLs, PR/issue templates, and README updated
 - README credits **Berdaya AI** as the builder
 
@@ -75,7 +75,7 @@ Installers and docs advertise **`berdaya` only**.
 | Home screen wordmark | `HERMES AGENT` → **`BERDAYA AGENT`** (`apps/desktop/src/components/chat/intro.tsx`) |
 | Brand mark | Berdaya mark on black (replaces Nous image) |
 | Nous Portal | Hidden from onboarding, Settings → Providers, Settings → API keys, model picker, shell model menu |
-| Updates | Remote update URLs point at `adrinant/berdaya-agent` |
+| Updates | Remote update URLs point at `berdaya/berdaya-agent` |
 
 **Nous Portal filtering:** `apps/desktop/src/lib/desktop-hidden-providers.ts` — applied in `getGlobalModelOptions()`, `listOAuthProviders()`, and `HermesGateway.request('model.options')`.
 
@@ -97,7 +97,7 @@ The agent’s self-description comes from **SOUL.md** and a built-in fallback in
 | `hermes_cli/default_soul.py` | Default SOUL template: “created by **Berdaya AI**” |
 | `agent/prompt_builder.py` | `DEFAULT_AGENT_IDENTITY` and help guidance updated |
 | CLI banner | “Nous Research” → “**Berdaya AI**” |
-| Docs link in prompt | `hermes-agent.nousresearch.com` → `github.com/adrinant/berdaya-agent` |
+| Docs link in prompt | `hermes-agent.nousresearch.com` → `github.com/berdaya/berdaya-agent` |
 
 **Auto-migration:** On startup, if `SOUL.md` still contains the untouched pre-rebrand default text (“created by Nous Research”), it is upgraded automatically (`hermes_cli/config.py` + `LEGACY_DEFAULT_SOUL_MD`).
 
@@ -110,7 +110,7 @@ The agent’s self-description comes from **SOUL.md** and a built-in fallback in
 - Banner: “An open source AI agent by **Berdaya AI**”
 - Persist **`BERDAYA_HOME`** only (not `HERMES_HOME`) so old Hermes installs can coexist
 - Bootstrap installer identifier: `com.berdayaai.agent.setup`
-- Raw GitHub URLs: `adrinant/berdaya-agent`
+- Raw GitHub URLs: `berdaya/berdaya-agent`
 
 ### Code checkout directory (under data home)
 
@@ -148,7 +148,7 @@ Completed in a follow-up pass:
 - Desktop `.exe` copyright/publisher → **Berdaya AI** (`main.cjs`, `set-exe-identity.cjs`)
 - Bootstrap installer publisher/copyright → **Berdaya AI**
 - Dashboard web UI org name → **Berdaya AI** (all `web/src/i18n/*.ts` locales)
-- Install/reinstall URLs → `raw.githubusercontent.com/adrinant/berdaya-agent/...`
+- Install/reinstall URLs → `raw.githubusercontent.com/berdaya/berdaya-agent/...`
 - Docs links in dashboard, setup wizard, CLI help → GitHub repo
 - Skills hub CLI messages → Berdaya Agent
 - Setup wizard: Nous Portal quick-setup path removed; `--portal` disabled
@@ -184,9 +184,9 @@ After installing the latest desktop `.exe` or running from source:
 **From source (developers):**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/adrinant/berdaya-agent/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/berdaya/berdaya-agent/main/scripts/install.sh | bash
 # or on Windows:
-# iex (irm https://raw.githubusercontent.com/adrinant/berdaya-agent/main/scripts/install.ps1)
+# iex (irm https://raw.githubusercontent.com/berdaya/berdaya-agent/main/scripts/install.ps1)
 ```
 
 ---

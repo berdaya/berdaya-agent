@@ -3425,7 +3425,7 @@ def tools_command(args=None, first_install: bool = False, config: dict = None):
     print(color("⚕ Berdaya Agent Tool Configuration", Colors.CYAN, Colors.BOLD))
     print(color("  Enable or disable tools per platform.", Colors.DIM))
     print(color("  Tools that need API keys will be configured when enabled.", Colors.DIM))
-    print(color("  Guide: https://github.com/adrinant/berdaya-agent", Colors.DIM))
+    print(color("  Guide: https://github.com/berdaya/berdaya-agent", Colors.DIM))
     print()
 
     # ── First-time install: linear flow, no platform menu ──

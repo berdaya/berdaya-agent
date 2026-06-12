@@ -8,7 +8,7 @@
 #   .\scripts\install.ps1
 #
 # Or from GitHub (main branch):
-#   iex (irm https://raw.githubusercontent.com/adrinant/berdaya-agent/main/scripts/install.ps1)
+#   iex (irm https://raw.githubusercontent.com/berdaya/berdaya-agent/main/scripts/install.ps1)
 #
 # Or download and run with options:
 #   .\install.ps1 -NoVenv -SkipSetup
@@ -98,8 +98,8 @@ try {
 # Configuration
 # ============================================================================
 
-$RepoUrlSsh = "git@github.com:adrinant/berdaya-agent.git"
-$RepoUrlHttps = "https://github.com/adrinant/berdaya-agent.git"
+$RepoUrlSsh = "git@github.com:berdaya/berdaya-agent.git"
+$RepoUrlHttps = "https://github.com/berdaya/berdaya-agent.git"
 $PythonVersion = "3.11"
 $NodeVersion = "22"
 
@@ -1335,13 +1335,13 @@ function Install-Repository {
                 # for.  GitHub supports archive URLs for commits, tags, and
                 # branches; we honour Commit > Tag > Branch.
                 if ($Commit) {
-                    $zipUrl = "https://github.com/adrinant/berdaya-agent/archive/$Commit.zip"
+                    $zipUrl = "https://github.com/berdaya/berdaya-agent/archive/$Commit.zip"
                     $zipLabel = $Commit
                 } elseif ($Tag) {
-                    $zipUrl = "https://github.com/adrinant/berdaya-agent/archive/refs/tags/$Tag.zip"
+                    $zipUrl = "https://github.com/berdaya/berdaya-agent/archive/refs/tags/$Tag.zip"
                     $zipLabel = $Tag
                 } else {
-                    $zipUrl = "https://github.com/adrinant/berdaya-agent/archive/refs/heads/$Branch.zip"
+                    $zipUrl = "https://github.com/berdaya/berdaya-agent/archive/refs/heads/$Branch.zip"
                     $zipLabel = $Branch
                 }
                 $zipPath = "$env:TEMP\hermes-agent-$zipLabel.zip"
@@ -3113,7 +3113,7 @@ try {
     Write-Err "Installation failed: $_"
     Write-Host ""
     Write-Info "If the error is unclear, try downloading and running the script directly:"
-    Write-Host "  Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/adrinant/berdaya-agent/main/scripts/install.ps1' -OutFile install.ps1" -ForegroundColor Yellow
+    Write-Host "  Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/berdaya/berdaya-agent/main/scripts/install.ps1' -OutFile install.ps1" -ForegroundColor Yellow
     Write-Host "  .\install.ps1" -ForegroundColor Yellow
     Write-Host ""
 }

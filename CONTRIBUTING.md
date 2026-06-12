@@ -81,7 +81,7 @@ This isn't a quality bar — it's a coupling-and-maintenance decision. Memory pr
 ### Clone and install
 
 ```bash
-git clone https://github.com/adrinant/berdaya-agent.git
+git clone https://github.com/berdaya/berdaya-agent.git
 cd hermes-agent
 
 # Create venv with Python 3.11
@@ -901,7 +901,7 @@ test(tools): add unit tests for file_operations
 
 ## Reporting Issues
 
-- Use [GitHub Issues](https://github.com/adrinant/berdaya-agent/issues)
+- Use [GitHub Issues](https://github.com/berdaya/berdaya-agent/issues)
 - Include: OS, Python version, Berdaya Agent version (`hermes version`), full error traceback
 - Include steps to reproduce
 - Check existing issues before creating duplicates
@@ -911,7 +911,7 @@ test(tools): add unit tests for file_operations
 
 ## Community
 
-- **GitHub**: [adrinant/berdaya-agent](https://github.com/adrinant/berdaya-agent) — bugs, features, and contributions
+- **GitHub**: [berdaya/berdaya-agent](https://github.com/berdaya/berdaya-agent) — bugs, features, and contributions
 - **GitHub Discussions**: For design proposals and architecture discussions
 - **Skills Hub**: Upload specialized skills to a registry and share them with the community
 

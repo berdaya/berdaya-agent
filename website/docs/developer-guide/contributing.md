@@ -41,7 +41,7 @@ We value contributions in this order:
 ### Clone and Install
 
 ```bash
-git clone https://github.com/adrinant/berdaya-agent.git
+git clone https://github.com/berdaya/berdaya-agent.git
 cd hermes-agent
 
 # Create venv with Python 3.11
@@ -90,7 +90,7 @@ pytest tests/ -v
 - **Comments**: Only when explaining non-obvious intent, trade-offs, or API quirks
 - **Error handling**: Catch specific exceptions. Use `logger.warning()`/`logger.error()` with `exc_info=True` for unexpected errors
 - **Cross-platform**: Never assume Unix (see below)
-- **Profile-safe paths**: Never hardcode `~/.hermes` — use `get_hermes_home()` from `hermes_constants` for code paths and `display_hermes_home()` for user-facing messages. See [AGENTS.md](https://github.com/adrinant/berdaya-agent/blob/main/AGENTS.md#profiles-multi-instance-support) for full rules.
+- **Profile-safe paths**: Never hardcode `~/.hermes` — use `get_hermes_home()` from `hermes_constants` for code paths and `display_hermes_home()` for user-facing messages. See [AGENTS.md](https://github.com/berdaya/berdaya-agent/blob/main/AGENTS.md#profiles-multi-instance-support) for full rules.
 
 ## Cross-Platform Compatibility
 
@@ -226,7 +226,7 @@ fix(security): prevent shell injection in sudo password piping
 
 ## Reporting Issues
 
-- Use [GitHub Issues](https://github.com/adrinant/berdaya-agent/issues)
+- Use [GitHub Issues](https://github.com/berdaya/berdaya-agent/issues)
 - Include: OS, Python version, Berdaya Agent version (`hermes version`), full error traceback
 - Include steps to reproduce
 - Check existing issues before creating duplicates
@@ -234,10 +234,10 @@ fix(security): prevent shell injection in sudo password piping
 
 ## Community
 
-- **GitHub**: [adrinant/berdaya-agent](https://github.com/adrinant/berdaya-agent)
+- **GitHub**: [berdaya/berdaya-agent](https://github.com/berdaya/berdaya-agent)
 - **GitHub Discussions**: For design proposals and architecture discussions
 - **Skills Hub**: Upload specialized skills and share with the community
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the [MIT License](https://github.com/adrinant/berdaya-agent/blob/main/LICENSE).
+By contributing, you agree that your contributions will be licensed under the [MIT License](https://github.com/berdaya/berdaya-agent/blob/main/LICENSE).

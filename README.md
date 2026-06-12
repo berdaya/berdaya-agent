@@ -4,14 +4,14 @@
 
 # Berdaya Agent ☤
 <p align="center">
-  <a href="https://github.com/adrinant/berdaya-agent"><img src="https://img.shields.io/badge/GitHub-adrinant%2Fberdaya-agent-181717?style=for-the-badge&logo=github" alt="GitHub"></a>
-  <a href="https://github.com/adrinant/berdaya-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
+  <a href="https://github.com/berdaya/berdaya-agent"><img src="https://img.shields.io/badge/GitHub-berdaya%2Fberdaya-agent-181717?style=for-the-badge&logo=github" alt="GitHub"></a>
+  <a href="https://github.com/berdaya/berdaya-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
   <a href="#"><img src="https://img.shields.io/badge/Built%20by-Berdaya%20AI-blueviolet?style=for-the-badge" alt="Built by Berdaya AI"></a>
   <a href="README.zh-CN.md"><img src="https://img.shields.io/badge/Lang-中文-red?style=for-the-badge" alt="中文"></a>
   <a href="README.ur-pk.md"><img src="https://img.shields.io/badge/Lang-اردو-green?style=for-the-badge" alt="اردو"></a>
 </p>
 
-**The self-improving AI agent built by [Berdaya AI](https://github.com/adrinant/berdaya-agent).** It's the only agent with a built-in learning loop — it creates skills from experience, improves them during use, nudges itself to persist knowledge, searches its own past conversations, and builds a deepening model of who you are across sessions. Run it on a $5 VPS, a GPU cluster, or serverless infrastructure that costs nearly nothing when idle. It's not tied to your laptop — talk to it from Telegram while it works on a cloud VM.
+**The self-improving AI agent built by [Berdaya AI](https://github.com/berdaya/berdaya-agent).** It's the only agent with a built-in learning loop — it creates skills from experience, improves them during use, nudges itself to persist knowledge, searches its own past conversations, and builds a deepening model of who you are across sessions. Run it on a $5 VPS, a GPU cluster, or serverless infrastructure that costs nearly nothing when idle. It's not tied to your laptop — talk to it from Telegram while it works on a cloud VM.
 
 Use any model you want — [OpenRouter](https://openrouter.ai) (200+ models), [NovitaAI](https://novita.ai), [NVIDIA NIM](https://build.nvidia.com), [Kimi/Moonshot](https://platform.moonshot.ai), [MiniMax](https://www.minimax.io), [Hugging Face](https://huggingface.co), OpenAI, Anthropic, or your own endpoint. Switch with `berdaya model` — no code changes, no lock-in.
 
@@ -34,13 +34,13 @@ Use any model you want — [OpenRouter](https://openrouter.ai) (200+ models), [N
 One-liner (clones from this repo):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/adrinant/berdaya-agent/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/berdaya/berdaya-agent/main/scripts/install.sh | bash
 ```
 
 Or clone manually:
 
 ```bash
-git clone https://github.com/adrinant/berdaya-agent.git
+git clone https://github.com/berdaya/berdaya-agent.git
 cd berdaya-agent
 ./scripts/install.sh
 ```
@@ -50,13 +50,13 @@ cd berdaya-agent
 One-liner:
 
 ```powershell
-iex (irm https://raw.githubusercontent.com/adrinant/berdaya-agent/main/scripts/install.ps1)
+iex (irm https://raw.githubusercontent.com/berdaya/berdaya-agent/main/scripts/install.ps1)
 ```
 
 Or clone manually:
 
 ```powershell
-git clone https://github.com/adrinant/berdaya-agent.git
+git clone https://github.com/berdaya/berdaya-agent.git
 cd berdaya-agent
 .\scripts\install.ps1
 ```
@@ -88,7 +88,7 @@ berdaya update       # Update to the latest version
 berdaya doctor       # Diagnose any issues
 ```
 
-📖 **Documentation:** browse locally with `cd website && npm install && npm start`, or see [`AGENTS.md`](AGENTS.md) for development. After GitHub Pages is enabled, docs will be at [adrinant.github.io/berdaya-agent/docs](https://adrinant.github.io/berdaya-agent/docs/).
+📖 **Documentation:** browse locally with `cd website && npm install && npm start`, or see [`AGENTS.md`](AGENTS.md) for development. After GitHub Pages is enabled, docs will be at [berdaya.github.io/berdaya-agent/docs](https://berdaya.github.io/berdaya-agent/docs/).
 
 ---
 
@@ -160,7 +160,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for development setup, code style, and 
 Quick start for contributors:
 
 ```bash
-git clone https://github.com/adrinant/berdaya-agent.git
+git clone https://github.com/berdaya/berdaya-agent.git
 cd berdaya-agent
 ./setup-hermes.sh     # installs uv, creates venv, installs .[all], symlinks ~/.local/bin/berdaya
 ./berdaya             # auto-detects the venv, no need to `source` first
@@ -180,7 +180,7 @@ scripts/run_tests.sh
 
 ## Community
 
-- 🐛 [Issues](https://github.com/adrinant/berdaya-agent/issues)
+- 🐛 [Issues](https://github.com/berdaya/berdaya-agent/issues)
 - 📚 [Skills Hub](https://agentskills.io)
 
 ---

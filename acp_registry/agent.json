@@ -3,8 +3,8 @@
   "name": "Berdaya Agent",
   "version": "0.16.0",
   "description": "Self-improving open-source AI agent by Berdaya AI with ACP editor integration, persistent memory, skills, and rich tool support.",
-  "repository": "https://github.com/adrinant/berdaya-agent",
-  "website": "https://github.com/adrinant/berdaya-agent",
+  "repository": "https://github.com/berdaya/berdaya-agent",
+  "website": "https://github.com/berdaya/berdaya-agent",
   "authors": ["Berdaya AI"],
   "license": "MIT",
   "distribution": {

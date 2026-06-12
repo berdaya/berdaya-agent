@@ -9,7 +9,7 @@
 #   ./scripts/install.sh
 #
 # Or pipe from GitHub (main branch):
-#   curl -fsSL https://raw.githubusercontent.com/adrinant/berdaya-agent/main/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/berdaya/berdaya-agent/main/scripts/install.sh | bash
 #
 # Or with options:
 #   curl -fsSL ... | bash -s -- --no-venv --skip-setup
@@ -46,8 +46,8 @@ NC='\033[0m' # No Color
 BOLD='\033[1m'
 
 # Configuration
-REPO_URL_SSH="git@github.com:adrinant/berdaya-agent.git"
-REPO_URL_HTTPS="https://github.com/adrinant/berdaya-agent.git"
+REPO_URL_SSH="git@github.com:berdaya/berdaya-agent.git"
+REPO_URL_HTTPS="https://github.com/berdaya/berdaya-agent.git"
 # Only BERDAYA_HOME relocates the install — a legacy HERMES_HOME env var
 # (from an old upstream Hermes install) must not hijack Berdaya's home.
 BERDAYA_HOME="${BERDAYA_HOME:-$HOME/.berdaya}"
@@ -488,7 +488,7 @@ detect_os() {
             OS="windows"
             DISTRO="windows"
             log_error "Windows detected. Please use the PowerShell installer:"
-            log_info "  iex (irm https://raw.githubusercontent.com/adrinant/berdaya-agent/main/scripts/install.ps1)"
+            log_info "  iex (irm https://raw.githubusercontent.com/berdaya/berdaya-agent/main/scripts/install.ps1)"
             exit 1
             ;;
         *)

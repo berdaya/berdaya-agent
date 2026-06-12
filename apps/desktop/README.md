@@ -1,11 +1,11 @@
 # Berdaya Agent Desktop ☤
 
 <p align="center">
-  <a href="https://github.com/adrinant/berdaya-agent"><img src="https://img.shields.io/badge/GitHub-adrinant%2Fberdaya--agent-181717?style=for-the-badge&logo=github" alt="GitHub"></a>
-  <a href="https://github.com/adrinant/berdaya-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
+  <a href="https://github.com/berdaya/berdaya-agent"><img src="https://img.shields.io/badge/GitHub-berdaya%2Fberdaya--agent-181717?style=for-the-badge&logo=github" alt="GitHub"></a>
+  <a href="https://github.com/berdaya/berdaya-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
 </p>
 
-**The native desktop app for [Berdaya Agent](../../README.md) — built by [Berdaya AI](https://github.com/adrinant/berdaya-agent).** Same agent, same skills, same memory as the CLI and gateway, in a polished native window — chat with streaming tool output, side-by-side previews, a file browser, voice, and settings, no terminal required. Available for **macOS, Windows, and Linux**.
+**The native desktop app for [Berdaya Agent](../../README.md) — built by [Berdaya AI](https://github.com/berdaya/berdaya-agent).** Same agent, same skills, same memory as the CLI and gateway, in a polished native window — chat with streaming tool output, side-by-side previews, a file browser, voice, and settings, no terminal required. Available for **macOS, Windows, and Linux**.
 
 <table>
 <tr><td><b>Chat with the full agent</b></td><td>Streaming responses, live tool activity, structured tool summaries, and the same conversation history as every other Berdaya Agent surface.</td></tr>
@@ -33,14 +33,14 @@ It builds and launches the GUI against your existing install — same config, ke
 ### Windows: include desktop in install
 
 ```powershell
-git clone https://github.com/adrinant/berdaya-agent.git
+git clone https://github.com/berdaya/berdaya-agent.git
 cd berdaya-agent
 .\scripts\install.ps1 -IncludeDesktop
 ```
 
 ### Prebuilt installers
 
-Build from source and distribute via [GitHub Releases](https://github.com/adrinant/berdaya-agent/releases):
+Build from source and distribute via [GitHub Releases](https://github.com/berdaya/berdaya-agent/releases):
 
 ```bash
 cd apps/desktop
@@ -133,8 +133,8 @@ Remove-Item -Recurse -Force "$env:LOCALAPPDATA\berdaya\berdaya-agent\venv"
 
 ## Community
 
-- 🐛 [Issues](https://github.com/adrinant/berdaya-agent/issues)
-- 📖 [Documentation](https://github.com/adrinant/berdaya-agent#documentation)
+- 🐛 [Issues](https://github.com/berdaya/berdaya-agent/issues)
+- 📖 [Documentation](https://github.com/berdaya/berdaya-agent#documentation)
 
 ---
 

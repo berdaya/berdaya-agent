@@ -7,11 +7,11 @@ const config: Config = {
   tagline: 'The self-improving AI agent',
   favicon: 'img/favicon.ico',
 
-  url: 'https://adrinant.github.io',
+  url: 'https://berdaya.github.io',
   baseUrl: '/berdaya-agent/docs/',
 
-  organizationName: 'adrinant',
-  projectName: 'hermes-agent',
+  organizationName: 'berdaya',
+  projectName: 'berdaya-agent',
 
   onBrokenLinks: 'warn',
 
@@ -73,7 +73,7 @@ const config: Config = {
         docs: {
           routeBasePath: '/',  // Docs at the root of /docs/
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/adrinant/berdaya-agent/edit/main/website/',
+          editUrl: 'https://github.com/berdaya/berdaya-agent/edit/main/website/',
         },
         blog: false,
         theme: {
@@ -114,7 +114,7 @@ const config: Config = {
           position: 'left',
         },
         {
-          href: 'https://github.com/adrinant/berdaya-agent',
+          href: 'https://github.com/berdaya/berdaya-agent',
           label: 'GitHub',
           position: 'left',
         },
@@ -123,7 +123,7 @@ const config: Config = {
           position: 'right',
         },
         {
-          href: 'https://github.com/adrinant/berdaya-agent',
+          href: 'https://github.com/berdaya/berdaya-agent',
           label: 'GitHub',
           position: 'right',
         },
@@ -144,15 +144,15 @@ const config: Config = {
         {
           title: 'Community',
           items: [
-            { label: 'GitHub Issues', href: 'https://github.com/adrinant/berdaya-agent/issues' },
+            { label: 'GitHub Issues', href: 'https://github.com/berdaya/berdaya-agent/issues' },
             { label: 'Skills Hub', href: 'https://agentskills.io' },
           ],
         },
         {
           title: 'More',
           items: [
-            { label: 'GitHub', href: 'https://github.com/adrinant/berdaya-agent' },
-            { label: 'Berdaya AI', href: 'https://github.com/adrinant/berdaya-agent' },
+            { label: 'GitHub', href: 'https://github.com/berdaya/berdaya-agent' },
+            { label: 'Berdaya AI', href: 'https://github.com/berdaya/berdaya-agent' },
           ],
         },
       ],
