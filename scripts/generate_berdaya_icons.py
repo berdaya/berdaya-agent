@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Berdaya Agent app icons (pixel-art B on black, matching banner style)."""
+"""Generate Berdaya Agent app icons (simple black orb on white)."""
 
 from __future__ import annotations
 
@@ -8,80 +8,21 @@ import shutil
 import zlib
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# 7-wide pixel "B" glyph (1 = filled).
-B_GLYPH = (
-    "#######",
-    "#     #",
-    "#     #",
-    "###### ",
-    "#     #",
-    "#     #",
-    "#######",
-)
-
-# Brand palette (matches assets/banner.png retro gold/orange look).
-BG = (0, 0, 0, 255)
-OUTLINE = (45, 28, 12, 255)
-GLOW = (255, 120, 30, 180)
-GRAD_TOP = (255, 230, 80)
-GRAD_BOTTOM = (220, 70, 25)
+BG = (255, 255, 255, 255)
+ORB = (0, 0, 0, 255)
 
 
-def _lerp(a: int, b: int, t: float) -> int:
-    return int(a + (b - a) * t)
-
-
-def _gradient_color(y: int, y0: int, y1: int) -> tuple[int, int, int]:
-    t = (y - y0) / max(y1 - y0, 1)
-    return (
-        _lerp(GRAD_TOP[0], GRAD_BOTTOM[0], t),
-        _lerp(GRAD_TOP[1], GRAD_BOTTOM[1], t),
-        _lerp(GRAD_TOP[2], GRAD_BOTTOM[2], t),
-    )
-
-
-def render_icon(size: int, *, padding: float = 0.12) -> Image.Image:
+def render_icon(size: int, *, padding: float = 0.18) -> Image.Image:
     """Render a square icon at `size`×`size` pixels."""
     img = Image.new("RGBA", (size, size), BG)
-    rows = len(B_GLYPH)
-    cols = max(len(row) for row in B_GLYPH)
-
-    usable = size * (1 - 2 * padding)
-    cell = int(usable / max(rows, cols))
-    glyph_w = cols * cell
-    glyph_h = rows * cell
-    x0 = (size - glyph_w) // 2
-    y0 = (size - glyph_h) // 2
-
-    # Glow layer
-    glow = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    glow_draw = ImageDraw.Draw(glow)
-    for r, row in enumerate(B_GLYPH):
-        for c, ch in enumerate(row):
-            if ch != "#":
-                continue
-            x = x0 + c * cell
-            y = y0 + r * cell
-            glow_draw.rectangle([x - 2, y - 2, x + cell + 1, y + cell + 1], fill=GLOW)
-    glow = glow.filter(ImageFilter.GaussianBlur(radius=max(2, size // 64)))
-    img = Image.alpha_composite(img, glow)
-
+    cx = cy = size / 2
+    radius = size * (0.5 - padding)
     draw = ImageDraw.Draw(img)
-    for r, row in enumerate(B_GLYPH):
-        for c, ch in enumerate(row):
-            if ch != "#":
-                continue
-            x = x0 + c * cell
-            y = y0 + r * cell
-            fill = _gradient_color(y + cell // 2, y0, y0 + glyph_h)
-            # Outline ring
-            draw.rectangle([x - 1, y - 1, x + cell, y + cell], fill=OUTLINE)
-            draw.rectangle([x, y, x + cell - 1, y + cell - 1], fill=fill)
-
+    draw.ellipse([cx - radius, cy - radius, cx + radius, cy + radius], fill=ORB)
     return img
 
 

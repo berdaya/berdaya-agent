@@ -113,7 +113,7 @@ Notes:
 
 - **`Codicon`** is the icon set. No mixing icon libraries inline.
 - **`BrandMark`** (`src/components/brand-mark.tsx`) is the brand glyph — the
-  `berdaya-mark` pixel B on a black tile, softly rounded, identical in light/dark.
+  `berdaya-mark` black orb on a white tile, softly rounded, identical in light/dark.
   It replaced scattered Sparkles glyphs in updates / onboarding / about. Use it
   for hero/brand moments; don't reintroduce decorative star/sparkle icons.
 
