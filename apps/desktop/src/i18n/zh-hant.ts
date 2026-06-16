@@ -167,11 +167,11 @@ export const zhHant = defineLocale({
       providerAccounts: '帳號',
       providerApiKeys: 'API 金鑰',
       gateway: '閘道',
-      apiKeys: '工具與金鑰',
-      keysTools: '工具',
-      keysSettings: '設定',
+      apiKeys: '整合金鑰',
+      keysTools: '工具服務',
+      keysSettings: '應用與閘道',
       mcp: 'MCP',
-      skills: '技能與工具',
+      skills: '技能與工具集',
       archivedChats: '已封存聊天',
       about: '關於'
     },
@@ -592,6 +592,7 @@ export const zhHant = defineLocale({
     model: {
       loading: '正在載入模型設定...',
       appliesDesc: '套用至新工作階段。可在輸入框的模型選擇器中臨時切換目前對話。',
+      apiKeyLabel: 'API 金鑰',
       provider: '提供方',
       model: '模型',
       applying: '套用中...',
@@ -778,7 +779,7 @@ export const zhHant = defineLocale({
     nav: {
       newChat: { title: '新工作階段', detail: '開始新的工作階段' },
       settings: { title: '設定', detail: '設定 Berdaya Agent 桌面端' },
-      skills: { title: '技能與工具', detail: '啟用技能、工具集和提供方' },
+      skills: { title: '技能與工具集', detail: '啟用技能與工具集' },
       messaging: { title: '訊息平台', detail: '設定 Telegram、Slack、Discord 等' },
       artifacts: { title: '成品', detail: '瀏覽產生的輸出' }
     },
@@ -1179,7 +1180,7 @@ export const zhHant = defineLocale({
   sidebar: {
     nav: {
       'new-session': '新工作階段',
-      skills: '技能與工具',
+      skills: '技能與工具集',
       messaging: '訊息平台',
       artifacts: '成品'
     },

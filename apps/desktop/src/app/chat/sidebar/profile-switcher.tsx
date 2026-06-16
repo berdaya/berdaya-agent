@@ -39,6 +39,7 @@ import {
   $profiles,
   $profileScope,
   ALL_PROFILES,
+  listNamedProjects,
   normalizeProfileKey,
   refreshActiveProfile,
   selectProfile,
@@ -128,11 +129,10 @@ export function ProfileRail() {
 
   const isAll = scope === ALL_PROFILES
   const activeKey = normalizeProfileKey(gatewayProfile)
-  const defaultProfile = profiles.find(profile => profile.is_default)
-  const onDefault = !isAll && activeKey === 'default'
 
-  const named = sortByProfileOrder(profiles.filter(profile => !profile.is_default), order)
-  const multiProfile = profiles.length > 1
+  const named = sortByProfileOrder(listNamedProjects(profiles), order)
+  const multiProfile = named.length > 1
+  const showProjectRail = named.length > 0
 
   // distance constraint: a small drag reorders, a tap still selects the profile.
   const sensors = useSensors(
@@ -196,30 +196,18 @@ export function ProfileRail() {
 
   return (
     <div aria-label="Projects" className="flex items-center gap-0.5" role="tablist">
-      {/* One button toggles default ↔ all: home face when scoped to a profile,
-          layers face when showing everything. Pinned left like Manage is right.
-          Hidden until a second profile exists. */}
-      {multiProfile &&
-        (defaultProfile ? (
-          // On default → toggle to all. Anywhere else (all view or a named
-          // profile) → return to default. So leaving a profile never lands on all.
-          <ProfilePill
-            active={isAll || onDefault}
-            glyph={isAll ? 'layers' : 'home'}
-            label={onDefault ? p.showAllProfiles : p.switchToProfile(defaultProfile.name)}
-            onSelect={() => (onDefault ? setShowAllProfiles(true) : selectProfile(defaultProfile.name))}
-          />
-        ) : (
-          <ProfilePill active={isAll} glyph="layers" label={p.allProfiles} onSelect={() => setShowAllProfiles(true)} />
-        ))}
+      {/* All-projects toggle — only when there are 2+ real projects. */}
+      {multiProfile && (
+        <ProfilePill active={isAll} glyph="layers" label={p.allProfiles} onSelect={() => setShowAllProfiles(true)} />
+      )}
 
-      {/* Single-profile: the active default's home icon next to the create +. */}
-      {!multiProfile && defaultProfile && (
+      {/* Legacy single-default install (before first project wizard). */}
+      {!showProjectRail && profiles.find(profile => profile.is_default) && (
         <ProfilePill
-          active
+          active={!isAll}
           glyph="home"
-          label={defaultProfile.name}
-          onSelect={() => selectProfile(defaultProfile.name)}
+          label={profiles.find(profile => profile.is_default)?.name ?? 'default'}
+          onSelect={() => selectProfile('default')}
         />
       )}
 
@@ -227,7 +215,7 @@ export function ProfileRail() {
         className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         ref={scrollRef}
       >
-        {multiProfile && (
+        {showProjectRail && (
           <DndContext
             collisionDetection={closestCenter}
             modifiers={[stepThroughCells]}

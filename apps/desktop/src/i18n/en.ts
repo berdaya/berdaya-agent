@@ -171,7 +171,7 @@ export const en: Translations = {
       'nav.commandCenter': 'Open command center',
       'nav.settings': 'Open settings',
       'nav.profiles': 'Open projects',
-      'nav.skills': 'Open skills',
+      'nav.skills': 'Open skills & toolsets',
       'nav.messaging': 'Open messaging',
       'nav.artifacts': 'Open artifacts',
       'nav.cron': 'Open scheduled jobs',
@@ -258,11 +258,11 @@ export const en: Translations = {
       providerAccounts: 'Accounts',
       providerApiKeys: 'API keys',
       gateway: 'Gateway',
-      apiKeys: 'Tools & Keys',
-      keysTools: 'Tools',
-      keysSettings: 'Settings',
+      apiKeys: 'Integration keys',
+      keysTools: 'Tool services',
+      keysSettings: 'App & gateway',
       mcp: 'MCP',
-      skills: 'Skills & Tools',
+      skills: 'Skills & toolsets',
       archivedChats: 'Archived Chats',
       about: 'About'
     },
@@ -482,6 +482,7 @@ export const en: Translations = {
     model: {
       loading: 'Loading model configuration...',
       appliesDesc: 'Applies to new sessions. Use the model picker in the composer to hot-swap the active chat.',
+      apiKeyLabel: 'API key',
       provider: 'Provider',
       model: 'Model',
       applying: 'Applying...',
@@ -670,7 +671,7 @@ export const en: Translations = {
     nav: {
       newChat: { title: 'New session', detail: 'Start a fresh session' },
       settings: { title: 'Settings', detail: 'Configure Berdaya Agent desktop' },
-      skills: { title: 'Skills & Tools', detail: 'Enable skills, toolsets, and providers' },
+      skills: { title: 'Skills & toolsets', detail: 'Enable skills and toolsets' },
       messaging: { title: 'Messaging', detail: 'Set up Telegram, Slack, Discord, and more' },
       artifacts: { title: 'Artifacts', detail: 'Browse generated outputs' }
     },
@@ -1081,7 +1082,7 @@ export const en: Translations = {
   sidebar: {
     nav: {
       'new-session': 'New session',
-      skills: 'Skills & Tools',
+      skills: 'Skills & toolsets',
       messaging: 'Messaging',
       artifacts: 'Artifacts'
     },

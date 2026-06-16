@@ -121,6 +121,21 @@ export function needsFirstProjectSetup(profiles: ProfileInfo[]): boolean {
   return profiles.filter(profile => !profile.is_default).length === 0
 }
 
+export function listNamedProjects(profiles: ProfileInfo[]): ProfileInfo[] {
+  return profiles.filter(profile => !profile.is_default)
+}
+
+/** User-facing project list: hide the built-in default once real projects exist. */
+export function listVisibleProjects(profiles: ProfileInfo[]): ProfileInfo[] {
+  const named = listNamedProjects(profiles)
+
+  return named.length > 0 ? named : profiles
+}
+
+export function shouldHideDefaultProject(profiles: ProfileInfo[]): boolean {
+  return listNamedProjects(profiles).length > 0
+}
+
 export function workspaceDirForProfile(profileName: string): string {
   const target = normalizeProfileKey(profileName)
   const profile = $profiles.get().find(row => normalizeProfileKey(row.name) === target)

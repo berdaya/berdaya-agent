@@ -27,6 +27,7 @@ import { useI18n } from '@/i18n'
 import { AlertTriangle, Pencil, Save, Terminal, Trash2, Users } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { notify, notifyError } from '@/store/notifications'
+import { listVisibleProjects } from '@/store/profile'
 
 import { useRefreshHotkey } from '../hooks/use-refresh-hotkey'
 import { OverlayMain, OverlayNewButton, OverlaySidebar, OverlaySplitLayout } from '../overlays/overlay-split-layout'
@@ -55,12 +56,13 @@ export function ProfilesView({ onClose }: ProfilesViewProps) {
     try {
       const { profiles: list } = await getProfiles()
       setProfiles(list)
+      const visible = listVisibleProjects(list)
       setSelectedName(current => {
-        if (current && list.some(p => p.name === current)) {
+        if (current && visible.some(p => p.name === current)) {
           return current
         }
 
-        return list.find(p => p.is_default)?.name ?? list[0]?.name ?? null
+        return visible[0]?.name ?? null
       })
     } catch (err) {
       notifyError(err, p.failedLoad)
@@ -73,13 +75,18 @@ export function ProfilesView({ onClose }: ProfilesViewProps) {
     void refresh()
   }, [refresh])
 
+  const visibleProfiles = useMemo(
+    () => (profiles ? listVisibleProjects(profiles) : []),
+    [profiles]
+  )
+
   const selected = useMemo(() => {
     if (!profiles) {
       return null
     }
 
-    return profiles.find(p => p.name === selectedName) ?? profiles[0] ?? null
-  }, [profiles, selectedName])
+    return visibleProfiles.find(p => p.name === selectedName) ?? visibleProfiles[0] ?? null
+  }, [profiles, selectedName, visibleProfiles])
 
   const handleCreate = useCallback(
     async (name: string, cloneFromDefault: boolean, description: string) => {
@@ -150,7 +157,7 @@ export function ProfilesView({ onClose }: ProfilesViewProps) {
         <OverlaySplitLayout>
           <OverlaySidebar>
             <OverlayNewButton label={p.newProfile} onClick={() => setCreateOpen(true)} />
-            {profiles.map(profile => (
+            {visibleProfiles.map(profile => (
               <ProfileRow
                 active={selected?.name === profile.name}
                 key={profile.name}
@@ -158,7 +165,7 @@ export function ProfilesView({ onClose }: ProfilesViewProps) {
                 profile={profile}
               />
             ))}
-            {profiles.length === 0 && (
+            {visibleProfiles.length === 0 && (
               <p className="px-2 py-4 text-center text-xs text-muted-foreground">{p.noProfiles}</p>
             )}
           </OverlaySidebar>

@@ -392,6 +392,7 @@ export interface Translations {
     model: {
       loading: string
       appliesDesc: string
+      apiKeyLabel: string
       provider: string
       model: string
       applying: string

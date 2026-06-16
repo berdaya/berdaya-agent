@@ -150,22 +150,47 @@ export function ModelSettings({ onMainModelChanged }: ModelSettingsProps) {
 
   const selectedProviderModels = selectedProviderRow?.models ?? []
 
+  const providerKeyEnvName =
+    selectedProviderRow?.key_env ||
+    (selectedProviderRow?.slug === 'berdaya-cloud' || selectedProviderRow?.slug === 'berdaya-local'
+      ? 'BERDAYA_API_KEY'
+      : '')
+
   // An unconfigured provider was picked: no credentials yet, so there are no
   // models to choose. `api_key` providers can be activated inline (paste key);
   // OAuth / external flows hand off to the onboarding sign-in.
   const needsSetup = !!selectedProvider && !isProviderReady(selectedProviderRow)
-  const providerKeyEnvName = selectedProviderRow?.key_env ?? ''
   const isApiKeyProvider =
-    selectedProviderRow?.auth_type === 'api_key' && providerKeyEnvName.length > 0
+    providerKeyEnvName.length > 0 &&
+    (selectedProviderRow?.auth_type === 'api_key' ||
+      selectedProviderRow?.slug === 'berdaya-cloud' ||
+      selectedProviderRow?.slug === 'berdaya-local')
+
+  const fallbackProviderKeyEnv = useMemo(
+    (): EnvVarInfo => ({
+      advanced: false,
+      category: 'provider',
+      description: `${selectedProviderRow?.name ?? 'Provider'} API key`,
+      is_password: true,
+      is_set: false,
+      redacted_value: null,
+      tools: [],
+      url: null
+    }),
+    [selectedProviderRow?.name]
+  )
 
   useEffect(() => {
     setKeyEdits({})
     setKeyRevealed({})
-    setProviderKeyEnv(null)
 
     if (!isApiKeyProvider) {
+      setProviderKeyEnv(null)
+
       return
     }
+
+    setProviderKeyEnv(fallbackProviderKeyEnv)
 
     let cancelled = false
 
@@ -177,27 +202,23 @@ export function ModelSettings({ onMainModelChanged }: ModelSettingsProps) {
 
         setProviderKeyEnv(
           vars[providerKeyEnvName] ?? {
-            advanced: false,
-            category: 'provider',
-            description: '',
-            is_password: true,
-            is_set: false,
-            redacted_value: null,
-            tools: [],
-            url: null
+            ...fallbackProviderKeyEnv,
+            is_set: false
           }
         )
       })
       .catch(() => {
         if (!cancelled) {
-          setProviderKeyEnv(null)
+          setProviderKeyEnv(fallbackProviderKeyEnv)
         }
       })
 
     return () => {
       cancelled = true
     }
-  }, [isApiKeyProvider, providerKeyEnvName, selectedProvider])
+  }, [fallbackProviderKeyEnv, isApiKeyProvider, providerKeyEnvName, selectedProvider])
+
+  const providerKeyInfo = isApiKeyProvider ? (providerKeyEnv ?? fallbackProviderKeyEnv) : null
 
   const auxDraftProviderModels = useMemo(
     () => providers.find(provider => provider.slug === auxDraft.provider)?.models ?? [],
@@ -500,13 +521,14 @@ export function ModelSettings({ onMainModelChanged }: ModelSettingsProps) {
             )
           )}
         </div>
-        {isApiKeyProvider && providerKeyEnv && (
-          <div className="mt-2 max-w-md">
+        {isApiKeyProvider && providerKeyInfo && (
+          <div className="mt-3 max-w-md">
+            <p className="mb-1.5 text-xs font-medium text-muted-foreground">{m.apiKeyLabel}</p>
             <KeyField
-              info={providerKeyEnv}
+              info={providerKeyInfo}
               placeholder={credentialPlaceholder(
                 providerKeyEnvName,
-                providerKeyEnv,
+                providerKeyInfo,
                 selectedProviderRow?.name ?? 'API key'
               )}
               rowProps={providerKeyRowProps}

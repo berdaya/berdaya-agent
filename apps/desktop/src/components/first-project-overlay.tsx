@@ -10,7 +10,7 @@ import { createProfile } from '@/hermes'
 import { useI18n } from '@/i18n'
 import { AlertTriangle } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-import { applyProfileWorkspace, refreshActiveProfile, selectProfile } from '@/store/profile'
+import { applyProfileWorkspace, refreshActiveProfile, switchProfile } from '@/store/profile'
 
 interface FirstProjectOverlayProps {
   enabled: boolean
@@ -75,9 +75,9 @@ export function FirstProjectOverlay({ enabled }: FirstProjectOverlayProps) {
       })
 
       await refreshActiveProfile()
-      selectProfile(trimmed)
-      await applyProfileWorkspace(trimmed)
-      setStatus('done')
+      // Make the new project the desktop's primary backend so onboarding, API
+      // keys, and settings land in its HERMES_HOME — not the hidden default.
+      await switchProfile(trimmed)
     } catch (err) {
       setStatus('idle')
       setError(err instanceof Error ? err.message : p.failedCreate)

@@ -5548,25 +5548,49 @@ ipcMain.handle('hermes:api', async (_event, request) => {
 
   await prepareProfileDeleteRequest(request)
 
-  const connection = await ensureBackend(request?.profile)
+  const profileKey =
+    request?.profile && String(request.profile).trim() ? String(request.profile).trim() : null
   const timeoutMs = resolveTimeoutMs(request?.timeoutMs, DEFAULT_FETCH_TIMEOUT_MS)
-  const url = `${connection.baseUrl}${request.path}`
-  // OAuth gateways authenticate REST via the HttpOnly session cookie held in
-  // the OAuth partition — route through Electron's net stack bound to that
-  // session so the cookie attaches automatically. Token/local modes keep using
-  // the static session-token header.
-  if (connection.authMode === 'oauth') {
-    return fetchJsonViaOauthSession(url, {
+
+  async function executeOnce() {
+    const connection = await ensureBackend(request?.profile)
+    const url = `${connection.baseUrl}${request.path}`
+
+    if (connection.authMode === 'oauth') {
+      return fetchJsonViaOauthSession(url, {
+        method: request?.method,
+        body: request?.body,
+        timeoutMs
+      })
+    }
+
+    return fetchJson(url, connection.token, {
       method: request?.method,
       body: request?.body,
       timeoutMs
     })
   }
-  return fetchJson(url, connection.token, {
-    method: request?.method,
-    body: request?.body,
-    timeoutMs
-  })
+
+  try {
+    return await executeOnce()
+  } catch (err) {
+    const message = String(err?.message || err)
+    const refused = err?.code === 'ECONNREFUSED' || message.includes('ECONNREFUSED')
+    const unauthorized = message.startsWith('401:')
+    const retriable =
+      profileKey && profileKey !== primaryProfileKey() && (unauthorized || refused)
+
+    if (!retriable) {
+      throw err
+    }
+
+    rememberLog(
+      `[api] ${message} for profile "${profileKey}" — resetting pool backend and retrying once`
+    )
+    stopPoolBackend(profileKey)
+
+    return executeOnce()
+  }
 })
 
 ipcMain.handle('hermes:notify', (_event, payload) => {

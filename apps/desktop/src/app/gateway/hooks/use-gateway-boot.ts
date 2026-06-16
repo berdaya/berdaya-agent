@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 import type { HermesConnection } from '@/global'
-import { HermesGateway } from '@/hermes'
+import { HermesGateway, getProfiles } from '@/hermes'
 import { translateNow } from '@/i18n'
 import { isGatewayReauthRequired, resolveGatewayWsUrl } from '@/lib/gateway-ws-url'
 import {
@@ -23,7 +23,7 @@ import {
   touchSecondaryGateways
 } from '@/store/gateway'
 import { notify, notifyError } from '@/store/notifications'
-import { $activeGatewayProfile, applyProfileWorkspace, normalizeProfileKey, refreshActiveProfile, touchActiveGatewayBackend } from '@/store/profile'
+import { $activeGatewayProfile, applyProfileWorkspace, listNamedProjects, normalizeProfileKey, refreshActiveProfile, switchProfile, touchActiveGatewayBackend } from '@/store/profile'
 import {
   $attentionSessionIds,
   $connection,
@@ -339,11 +339,26 @@ export function useGatewayBoot({
         // right backend. Best-effort: a missing preference means "default".
         try {
           const pref = await desktop.profile?.get?.()
-          const profileKey = (pref?.profile ?? '').trim() || 'default'
+          const storedProfile = (pref?.profile ?? '').trim()
+          const profileKey = storedProfile || 'default'
           $activeGatewayProfile.set(profileKey)
           setPrimaryGateway(gateway, profileKey)
           void ensureGatewayForProfile(profileKey)
           await refreshActiveProfile()
+
+          // Legacy installs that created a project but still boot the hidden
+          // default backend — re-home the desktop onto the first real project.
+          if (!cancelled) {
+            const { profiles } = await getProfiles()
+            const named = listNamedProjects(profiles)
+
+            if (named.length >= 1 && (!storedProfile || storedProfile === 'default')) {
+              await switchProfile(named[0].name)
+
+              return
+            }
+          }
+
           await applyProfileWorkspace(profileKey)
         } catch {
           $activeGatewayProfile.set('default')

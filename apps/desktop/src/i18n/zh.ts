@@ -254,11 +254,11 @@ export const zh: Translations = {
       providerAccounts: '账号',
       providerApiKeys: 'API 密钥',
       gateway: '网关',
-      apiKeys: '工具与密钥',
-      keysTools: '工具',
-      keysSettings: '设置',
+      apiKeys: '集成密钥',
+      keysTools: '工具服务',
+      keysSettings: '应用与网关',
       mcp: 'MCP',
-      skills: '技能与工具',
+      skills: '技能与工具集',
       archivedChats: '已归档对话',
       about: '关于'
     },
@@ -678,6 +678,7 @@ export const zh: Translations = {
     model: {
       loading: '正在加载模型配置...',
       appliesDesc: '应用于新会话。可在输入框的模型选择器中临时切换当前对话。',
+      apiKeyLabel: 'API 密钥',
       provider: '提供方',
       model: '模型',
       applying: '应用中...',
@@ -862,7 +863,7 @@ export const zh: Translations = {
     nav: {
       newChat: { title: '新建会话', detail: '开始一个新会话' },
       settings: { title: '设置', detail: '配置 Berdaya Agent 桌面端' },
-      skills: { title: '技能与工具', detail: '启用技能、工具集与提供方' },
+      skills: { title: '技能与工具集', detail: '启用技能与工具集' },
       messaging: { title: '消息平台', detail: '配置 Telegram、Slack、Discord 等' },
       artifacts: { title: '产物', detail: '浏览生成的输出' }
     },
@@ -1266,7 +1267,7 @@ export const zh: Translations = {
   sidebar: {
     nav: {
       'new-session': '新建会话',
-      skills: '技能与工具',
+      skills: '技能与工具集',
       messaging: '消息平台',
       artifacts: '产物'
     },

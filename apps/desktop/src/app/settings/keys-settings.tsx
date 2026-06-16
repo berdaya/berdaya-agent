@@ -8,7 +8,7 @@ import { useEnvCredentials } from './env-credentials'
 import { asText } from './helpers'
 import { LoadingState, SettingsContent } from './primitives'
 
-// Sub-views surfaced as sidebar subnav under Tools & Keys (see settings/index.tsx).
+// Sub-views surfaced as sidebar subnav under Integration keys (see settings/index.tsx).
 export const KEYS_VIEWS = ['tools', 'settings'] as const
 
 export type KeysView = (typeof KEYS_VIEWS)[number]

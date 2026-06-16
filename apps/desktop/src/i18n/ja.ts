@@ -172,11 +172,11 @@ export const ja = defineLocale({
       providerAccounts: 'アカウント',
       providerApiKeys: 'API キー',
       gateway: 'ゲートウェイ',
-      apiKeys: 'ツールとキー',
-      keysTools: 'ツール',
-      keysSettings: '設定',
+      apiKeys: '連携キー',
+      keysTools: 'ツールサービス',
+      keysSettings: 'アプリとゲートウェイ',
       mcp: 'MCP',
-      skills: 'スキルとツール',
+      skills: 'スキルとツールセット',
       archivedChats: 'アーカイブ済みチャット',
       about: '情報'
     },
@@ -605,6 +605,7 @@ export const ja = defineLocale({
     model: {
       loading: 'モデル設定を読み込み中...',
       appliesDesc: '新しいセッションに適用されます。コンポーザーのモデルピッカーを使ってアクティブなチャットをホットスワップできます。',
+      apiKeyLabel: 'APIキー',
       provider: 'プロバイダー',
       model: 'モデル',
       applying: '適用中...',
@@ -795,7 +796,7 @@ export const ja = defineLocale({
     nav: {
       newChat: { title: '新しいセッション', detail: '新しいセッションを開始' },
       settings: { title: '設定', detail: 'Berdaya Agent デスクトップを設定' },
-      skills: { title: 'スキルとツール', detail: 'スキル、ツールセット、プロバイダーを有効化' },
+      skills: { title: 'スキルとツールセット', detail: 'スキルとツールセットを有効化' },
       messaging: { title: 'メッセージング', detail: 'Telegram、Slack、Discord などを設定' },
       artifacts: { title: 'アーティファクト', detail: '生成された出力を閲覧' }
     },
@@ -1214,7 +1215,7 @@ export const ja = defineLocale({
   sidebar: {
     nav: {
       'new-session': '新しいセッション',
-      skills: 'スキルとツール',
+      skills: 'スキルとツールセット',
       messaging: 'メッセージング',
       artifacts: 'アーティファクト'
     },
