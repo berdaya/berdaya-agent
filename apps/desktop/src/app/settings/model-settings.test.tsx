@@ -16,6 +16,8 @@ const getAuxiliaryModels = vi.fn()
 const setModelAssignment = vi.fn()
 const getRecommendedDefaultModel = vi.fn()
 const setEnvVar = vi.fn()
+const deleteEnvVar = vi.fn()
+const getEnvVars = vi.fn()
 const startManualProviderOAuth = vi.fn()
 
 vi.mock('@/hermes', () => ({
@@ -24,7 +26,9 @@ vi.mock('@/hermes', () => ({
   getAuxiliaryModels: () => getAuxiliaryModels(),
   setModelAssignment: (body: unknown) => setModelAssignment(body),
   getRecommendedDefaultModel: (slug: string) => getRecommendedDefaultModel(slug),
-  setEnvVar: (key: string, value: string) => setEnvVar(key, value)
+  setEnvVar: (key: string, value: string) => setEnvVar(key, value),
+  deleteEnvVar: (key: string) => deleteEnvVar(key),
+  getEnvVars: () => getEnvVars()
 }))
 
 vi.mock('@/store/onboarding', () => ({
@@ -47,6 +51,29 @@ beforeEach(() => {
   setModelAssignment.mockResolvedValue({ provider: 'nous', model: 'hermes-4', gateway_tools: [] })
   getRecommendedDefaultModel.mockResolvedValue({ provider: 'deepseek', model: 'deepseek-chat', free_tier: null })
   setEnvVar.mockResolvedValue({ ok: true })
+  deleteEnvVar.mockResolvedValue({ ok: true })
+  getEnvVars.mockResolvedValue({
+    DEEPSEEK_API_KEY: {
+      advanced: false,
+      category: 'provider',
+      description: 'DeepSeek API key',
+      is_password: true,
+      is_set: false,
+      redacted_value: null,
+      tools: [],
+      url: null
+    },
+    BERDAYA_API_KEY: {
+      advanced: false,
+      category: 'provider',
+      description: 'Berdaya API key',
+      is_password: true,
+      is_set: true,
+      redacted_value: 'sk-ber••••••••',
+      tools: [],
+      url: null
+    }
+  })
 })
 
 afterEach(() => {
@@ -90,14 +117,41 @@ describe('ModelSettings', () => {
     const deepseekOption = await screen.findByText(/DeepSeek/)
     fireEvent.click(deepseekOption)
 
-    // The inline key input appears for an api_key provider that needs setup.
-    const keyInput = await screen.findByPlaceholderText(/Paste DEEPSEEK_API_KEY/)
+    await waitFor(() => expect(getEnvVars).toHaveBeenCalled())
+
+    const keyInput = await screen.findByPlaceholderText(/DeepSeek/)
     fireEvent.change(keyInput, { target: { value: 'sk-test-123' } })
 
-    const activate = await screen.findByRole('button', { name: /Activate/ })
-    fireEvent.click(activate)
+    const save = await screen.findByRole('button', { name: 'Save' })
+    fireEvent.click(save)
 
     await waitFor(() => expect(setEnvVar).toHaveBeenCalledWith('DEEPSEEK_API_KEY', 'sk-test-123'))
+  })
+
+  it('keeps the api_key editor visible after the provider is configured', async () => {
+    getGlobalModelOptions.mockResolvedValue({
+      providers: [
+        { name: 'Nous', slug: 'nous', models: ['hermes-4'], authenticated: true },
+        {
+          name: 'Berdaya Cloud',
+          slug: 'berdaya-cloud',
+          models: ['berdaya/1.0'],
+          authenticated: true,
+          auth_type: 'api_key',
+          key_env: 'BERDAYA_API_KEY'
+        }
+      ]
+    })
+
+    await renderModelSettings()
+    await waitFor(() => expect(getGlobalModelOptions).toHaveBeenCalled())
+
+    const triggers = screen.getAllByRole('combobox')
+    fireEvent.click(triggers[0])
+    fireEvent.click(await screen.findByText(/Berdaya Cloud/))
+
+    await waitFor(() => expect(getEnvVars).toHaveBeenCalled())
+    expect(await screen.findByDisplayValue('sk-ber••••••••')).toBeTruthy()
   })
 
   it('renders the auxiliary task rows', async () => {

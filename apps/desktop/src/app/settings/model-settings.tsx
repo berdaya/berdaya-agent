@@ -1,23 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
+  deleteEnvVar,
   getAuxiliaryModels,
+  getEnvVars,
   getGlobalModelInfo,
   getGlobalModelOptions,
   getRecommendedDefaultModel,
   setEnvVar,
   setModelAssignment
 } from '@/hermes'
-import type { AuxiliaryModelsResponse, ModelOptionProvider, StaleAuxAssignment } from '@/hermes'
+import type { AuxiliaryModelsResponse, EnvVarInfo, ModelOptionProvider, StaleAuxAssignment } from '@/hermes'
 import { useI18n } from '@/i18n'
 import { AlertTriangle, Cpu, Loader2 } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { startManualProviderOAuth } from '@/store/onboarding'
 
 import { CONTROL_TEXT } from './constants'
+import { credentialPlaceholder, KeyField, type KeyRowProps } from './credential-key-ui'
+import { withoutKey } from './helpers'
 import { ListRow, LoadingState, Pill, SectionHeading } from './primitives'
 
 // A provider row is "ready" to pick a model from when it reports models. The
@@ -103,10 +106,11 @@ export function ModelSettings({ onMainModelChanged }: ModelSettingsProps) {
   // Aux slots reported stale by the backend immediately after a main-model
   // switch (provider differs from the new main). Cleared on next switch/reset.
   const [switchStaleAux, setSwitchStaleAux] = useState<StaleAuxAssignment[]>([])
-  // Inline API-key entry for picking an unconfigured `api_key` provider in
-  // place — mirrors the onboarding ApiKeyForm but scoped to the model picker.
-  const [apiKeyDraft, setApiKeyDraft] = useState('')
-  const [activating, setActivating] = useState(false)
+  // Inline API-key editor for `api_key` providers — always visible so keys stay
+  // editable after first save (Berdaya Cloud/Local share BERDAYA_API_KEY).
+  const [providerKeyEnv, setProviderKeyEnv] = useState<EnvVarInfo | null>(null)
+  const [keyEdits, setKeyEdits] = useState<Record<string, string>>({})
+  const [keySaving, setKeySaving] = useState('')
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -148,12 +152,49 @@ export function ModelSettings({ onMainModelChanged }: ModelSettingsProps) {
   // models to choose. `api_key` providers can be activated inline (paste key);
   // OAuth / external flows hand off to the onboarding sign-in.
   const needsSetup = !!selectedProvider && !isProviderReady(selectedProviderRow)
-  const setupIsApiKey = needsSetup && selectedProviderRow?.auth_type === 'api_key' && !!selectedProviderRow?.key_env
+  const providerKeyEnvName = selectedProviderRow?.key_env ?? ''
+  const isApiKeyProvider =
+    selectedProviderRow?.auth_type === 'api_key' && providerKeyEnvName.length > 0
 
-  // Clear any half-typed key when switching provider so it can't leak across.
   useEffect(() => {
-    setApiKeyDraft('')
-  }, [selectedProvider])
+    setKeyEdits({})
+    setProviderKeyEnv(null)
+
+    if (!isApiKeyProvider) {
+      return
+    }
+
+    let cancelled = false
+
+    void getEnvVars()
+      .then(vars => {
+        if (cancelled) {
+          return
+        }
+
+        setProviderKeyEnv(
+          vars[providerKeyEnvName] ?? {
+            advanced: false,
+            category: 'provider',
+            description: '',
+            is_password: true,
+            is_set: false,
+            redacted_value: null,
+            tools: [],
+            url: null
+          }
+        )
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setProviderKeyEnv(null)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isApiKeyProvider, providerKeyEnvName, selectedProvider])
 
   const auxDraftProviderModels = useMemo(
     () => providers.find(provider => provider.slug === auxDraft.provider)?.models ?? [],
@@ -181,47 +222,93 @@ export function ModelSettings({ onMainModelChanged }: ModelSettingsProps) {
       .map(entry => ({ task: entry.task, provider: entry.provider, model: entry.model }))
   }, [auxiliary, mainModel])
 
-  // Paste an API key for the selected `api_key` provider, persist it, then
-  // refresh so the now-authenticated provider's models populate. Auto-selects
-  // the recommended default model so the user can Apply in one more click.
-  const activateApiKeyProvider = useCallback(async () => {
-    const keyEnv = selectedProviderRow?.key_env
-    const slug = selectedProviderRow?.slug
+  const refreshProviderKeyEnv = useCallback(async (varKey: string) => {
+    const vars = await getEnvVars()
+    setProviderKeyEnv(vars[varKey] ?? null)
+  }, [])
 
-    if (!keyEnv || !slug || !apiKeyDraft.trim()) {
-      return
-    }
+  const saveProviderApiKey = useCallback(
+    async (varKey: string) => {
+      const value = keyEdits[varKey]?.trim()
 
-    setActivating(true)
-    setError('')
-
-    try {
-      await setEnvVar(keyEnv, apiKeyDraft.trim())
-      setApiKeyDraft('')
-
-      // Pick a sensible default for the freshly-activated provider (mirrors
-      // `hermes model` curation). Best-effort — fall through to the refreshed
-      // model list if it fails.
-      let nextModel = ''
-
-      try {
-        const rec = await getRecommendedDefaultModel(slug)
-        nextModel = rec.model || ''
-      } catch {
-        nextModel = ''
+      if (!value) {
+        return
       }
 
-      const options = await getGlobalModelOptions()
-      setProviders(options.providers || [])
-      const refreshedRow = options.providers?.find(p => p.slug === slug)
-      const fallbackModel = refreshedRow?.models?.[0] ?? ''
-      setSelectedModel(nextModel || fallbackModel)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setActivating(false)
-    }
-  }, [apiKeyDraft, selectedProviderRow])
+      const slug = selectedProviderRow?.slug
+      const wasNeedsSetup = needsSetup
+
+      setKeySaving(varKey)
+      setError('')
+
+      try {
+        await setEnvVar(varKey, value)
+        setKeyEdits(prev => withoutKey(prev, varKey))
+        await refreshProviderKeyEnv(varKey)
+
+        if (!slug) {
+          return
+        }
+
+        let nextModel = ''
+
+        if (wasNeedsSetup) {
+          try {
+            const rec = await getRecommendedDefaultModel(slug)
+            nextModel = rec.model || ''
+          } catch {
+            nextModel = ''
+          }
+        }
+
+        const options = await getGlobalModelOptions()
+        setProviders(options.providers || [])
+        const refreshedRow = options.providers?.find(p => p.slug === slug)
+
+        if (wasNeedsSetup) {
+          const fallbackModel = refreshedRow?.models?.[0] ?? ''
+          setSelectedModel(nextModel || fallbackModel)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err))
+      } finally {
+        setKeySaving('')
+      }
+    },
+    [keyEdits, needsSetup, refreshProviderKeyEnv, selectedProviderRow]
+  )
+
+  const clearProviderApiKey = useCallback(
+    async (varKey: string) => {
+      setKeySaving(varKey)
+      setError('')
+
+      try {
+        await deleteEnvVar(varKey)
+        setKeyEdits(prev => withoutKey(prev, varKey))
+        await refreshProviderKeyEnv(varKey)
+
+        const options = await getGlobalModelOptions()
+        setProviders(options.providers || [])
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err))
+      } finally {
+        setKeySaving('')
+      }
+    },
+    [refreshProviderKeyEnv]
+  )
+
+  const providerKeyRowProps = useMemo<KeyRowProps>(
+    () => ({
+      edits: keyEdits,
+      saving: keySaving,
+      setEdits: setKeyEdits,
+      onSave: saveProviderApiKey,
+      onClear: clearProviderApiKey
+    }),
+    [clearProviderApiKey, keyEdits, keySaving, saveProviderApiKey]
+  )
 
   // OAuth / external providers can't be activated with a pasted key — hand off
   // to the shared onboarding flow scoped to this provider's real sign-in.
@@ -358,66 +445,59 @@ export function ModelSettings({ onMainModelChanged }: ModelSettingsProps) {
               ))}
             </SelectContent>
           </Select>
-          {needsSetup ? (
-            setupIsApiKey ? (
+          {needsSetup && !isApiKeyProvider ? (
+            <Button onClick={startProviderSetup} size="sm" variant="textStrong">
+              Set up {selectedProviderRow?.name ?? 'provider'}
+            </Button>
+          ) : (
+            !needsSetup && (
               <>
-                <Input
-                  autoComplete="off"
-                  className={cn('min-w-60 flex-1', CONTROL_TEXT)}
-                  onChange={event => setApiKeyDraft(event.target.value)}
-                  onKeyDown={event => {
-                    if (event.key === 'Enter') {
-                      void activateApiKeyProvider()
-                    }
-                  }}
-                  placeholder={`Paste ${selectedProviderRow?.key_env ?? 'API key'}`}
-                  type="password"
-                  value={apiKeyDraft}
-                />
+                <Select onValueChange={setSelectedModel} value={selectedModel}>
+                  <SelectTrigger className={cn('min-w-60', CONTROL_TEXT)}>
+                    <SelectValue placeholder={m.model} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(selectedProviderModels.length ? selectedProviderModels : []).map(model => (
+                      <SelectItem key={model} value={model}>
+                        {model}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Button
-                  disabled={!apiKeyDraft.trim() || activating}
-                  onClick={() => void activateApiKeyProvider()}
+                  disabled={!selectedProvider || !selectedModel || applying}
+                  onClick={() => void applyMainModel()}
                   size="sm"
                 >
-                  {activating && <Loader2 className="size-3.5 animate-spin" />}
-                  {activating ? 'Activating...' : 'Activate'}
+                  {applying && <Loader2 className="size-3.5 animate-spin" />}
+                  {applying ? m.applying : t.common.apply}
                 </Button>
               </>
-            ) : (
-              <Button onClick={startProviderSetup} size="sm" variant="textStrong">
-                Set up {selectedProviderRow?.name ?? 'provider'}
-              </Button>
             )
-          ) : (
-            <>
-              <Select onValueChange={setSelectedModel} value={selectedModel}>
-                <SelectTrigger className={cn('min-w-60', CONTROL_TEXT)}>
-                  <SelectValue placeholder={m.model} />
-                </SelectTrigger>
-                <SelectContent>
-                  {(selectedProviderModels.length ? selectedProviderModels : []).map(model => (
-                    <SelectItem key={model} value={model}>
-                      {model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                disabled={!selectedProvider || !selectedModel || applying}
-                onClick={() => void applyMainModel()}
-                size="sm"
-              >
-                {applying && <Loader2 className="size-3.5 animate-spin" />}
-                {applying ? m.applying : t.common.apply}
-              </Button>
-            </>
           )}
         </div>
-        {needsSetup && !setupIsApiKey && (
+        {isApiKeyProvider && providerKeyEnv && (
+          <div className="mt-2 max-w-md">
+            <KeyField
+              info={providerKeyEnv}
+              placeholder={credentialPlaceholder(
+                providerKeyEnvName,
+                providerKeyEnv,
+                selectedProviderRow?.name ?? 'API key'
+              )}
+              rowProps={providerKeyRowProps}
+              varKey={providerKeyEnvName}
+            />
+          </div>
+        )}
+        {needsSetup && isApiKeyProvider && (
           <p className="mt-2 text-xs text-muted-foreground">
-            {selectedProviderRow?.auth_type === 'api_key'
-              ? `${selectedProviderRow?.name} needs an API key — set it up to choose a model.`
-              : `${selectedProviderRow?.name} signs in through your browser — Berdaya Agent runs the flow for you.`}
+            {`${selectedProviderRow?.name} needs an API key — save one to choose a model.`}
+          </p>
+        )}
+        {needsSetup && !isApiKeyProvider && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            {`${selectedProviderRow?.name} signs in through your browser — Berdaya Agent runs the flow for you.`}
           </p>
         )}
         {error && <div className="mt-2 text-xs text-destructive">{error}</div>}
