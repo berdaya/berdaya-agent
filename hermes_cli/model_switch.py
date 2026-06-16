@@ -546,10 +546,11 @@ def _resolve_alias_fallback(
 ) -> Optional[tuple[str, str, str]]:
     """Try to resolve an alias on the user's authenticated providers.
 
-    Falls back to ``("openrouter", "nous")`` only when no authenticated
-    providers are supplied (backwards compat for non-interactive callers).
+    Falls back to Berdaya providers when no authenticated providers are supplied.
     """
-    providers = authenticated_providers or ("openrouter", "nous")
+    from hermes_constants import BERDAYA_ALLOWED_PROVIDER_IDS
+
+    providers = authenticated_providers or tuple(BERDAYA_ALLOWED_PROVIDER_IDS)
     for provider in providers:
         result = resolve_alias(raw_input, provider)
         if result is not None:

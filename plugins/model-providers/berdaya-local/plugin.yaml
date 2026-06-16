@@ -1,0 +1,5 @@
+name: berdaya-local
+kind: model-provider
+version: 1.0.0
+description: Berdaya Local — dev inference at 127.0.0.1:8000
+author: Berdaya AI

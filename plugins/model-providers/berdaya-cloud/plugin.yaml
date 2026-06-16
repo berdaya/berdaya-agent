@@ -1,0 +1,5 @@
+name: berdaya-cloud
+kind: model-provider
+version: 1.0.0
+description: Berdaya Cloud — production inference at api.berdaya.ai
+author: Berdaya AI

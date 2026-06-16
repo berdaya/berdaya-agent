@@ -989,6 +989,8 @@ class ProviderEntry(NamedTuple):
     tui_desc: str   # detailed description for `hermes model` TUI
 
 CANONICAL_PROVIDERS: list[ProviderEntry] = [
+    ProviderEntry("berdaya-cloud",   "Berdaya Cloud",            "Berdaya AI — production API at api.berdaya.ai"),
+    ProviderEntry("berdaya-local",   "Berdaya Local",            "Berdaya AI — local dev server at 127.0.0.1:8000"),
     ProviderEntry("nous",           "Nous Portal",              "Nous Portal (Everything your agent needs, 300+ models with bundled tool use)"),
     ProviderEntry("openrouter",     "OpenRouter",               "OpenRouter (Pay-per-use API aggregator)"),
     ProviderEntry("novita",         "NovitaAI",                 "NovitaAI (Cloud: Model API, Agent Sandbox, GPU Cloud)"),

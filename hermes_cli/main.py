@@ -2856,7 +2856,7 @@ def select_provider_and_model(args=None):
     elif selected_provider == "nous":
         if is_berdaya_hidden_provider("nous"):
             print("Nous Portal is not available in Berdaya Agent.")
-            print("Choose OpenRouter, Anthropic, or another provider instead.")
+            print("Choose Berdaya Cloud or Berdaya Local instead.")
             return
         _model_flow_nous(config, current_model, args=args)
     elif selected_provider == "openai-codex":

@@ -135,7 +135,7 @@ def _model_flow_nous(config, current_model="", args=None):
 
     if is_berdaya_hidden_provider("nous"):
         print("Nous Portal is not available in Berdaya Agent.")
-        print("Run `berdaya model` and choose OpenRouter, Anthropic, or another provider.")
+        print("Run `berdaya model` and choose Berdaya Cloud or Berdaya Local.")
         return
 
     from hermes_cli.auth import (

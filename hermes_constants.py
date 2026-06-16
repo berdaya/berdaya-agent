@@ -514,14 +514,23 @@ AGENT_INSTALL_DIR_NAME = "berdaya-agent"
 LEGACY_AGENT_INSTALL_DIR_NAME = "hermes-agent"
 _ROOT_INSTALL_DIR_NAMES = frozenset({AGENT_INSTALL_DIR_NAME, LEGACY_AGENT_INSTALL_DIR_NAME})
 
-# Inference / OAuth providers hidden in the Berdaya Agent product build.
+# Inference providers surfaced in the Berdaya Agent product build.
+# Everything else is hidden from pickers, setup, auth add, and desktop UI.
 # Mirrors ``apps/desktop/src/lib/desktop-hidden-providers.ts``.
-BERDAYA_HIDDEN_PROVIDER_IDS = frozenset({"nous"})
+BERDAYA_ALLOWED_PROVIDER_IDS = frozenset({"berdaya-cloud", "berdaya-local"})
+
+
+def is_berdaya_allowed_provider(provider_id: str | None) -> bool:
+    """Return True when the Berdaya distribution may surface this provider."""
+    return (provider_id or "").strip().lower() in BERDAYA_ALLOWED_PROVIDER_IDS
 
 
 def is_berdaya_hidden_provider(provider_id: str | None) -> bool:
     """Return True when the Berdaya distribution must not surface this provider."""
-    return (provider_id or "").strip().lower() in BERDAYA_HIDDEN_PROVIDER_IDS
+    slug = (provider_id or "").strip().lower()
+    if not slug:
+        return False
+    return slug not in BERDAYA_ALLOWED_PROVIDER_IDS
 
 
 def get_agent_install_dir(home: Path | None = None) -> Path:

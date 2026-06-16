@@ -357,11 +357,21 @@ class TestAgentInstallDir:
 
 
 class TestBerdayaHiddenProviders:
-    def test_nous_hidden(self):
-        from hermes_constants import is_berdaya_hidden_provider
+    def test_only_berdaya_providers_allowed(self):
+        from hermes_constants import (
+            BERDAYA_ALLOWED_PROVIDER_IDS,
+            is_berdaya_allowed_provider,
+            is_berdaya_hidden_provider,
+        )
 
+        assert BERDAYA_ALLOWED_PROVIDER_IDS == frozenset({"berdaya-cloud", "berdaya-local"})
+        assert is_berdaya_allowed_provider("berdaya-cloud") is True
+        assert is_berdaya_allowed_provider("berdaya-local") is True
+        assert is_berdaya_allowed_provider("berdaya") is False
         assert is_berdaya_hidden_provider("nous") is True
         assert is_berdaya_hidden_provider("NOUS") is True
-        assert is_berdaya_hidden_provider("openrouter") is False
+        assert is_berdaya_hidden_provider("openrouter") is True
+        assert is_berdaya_hidden_provider("berdaya-cloud") is False
+        assert is_berdaya_hidden_provider("berdaya-local") is False
         assert is_berdaya_hidden_provider("") is False
 

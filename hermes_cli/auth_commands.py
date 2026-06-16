@@ -167,8 +167,8 @@ def auth_add_command(args) -> None:
 
     if is_berdaya_hidden_provider(provider):
         raise SystemExit(
-            "Nous Portal is not available in Berdaya Agent. "
-            "Use `berdaya auth add openrouter` or another provider with your API key."
+            "That provider is not available in Berdaya Agent. "
+            "Use `berdaya auth add berdaya-cloud` or `berdaya auth add berdaya-local` with your Berdaya API key."
         )
     if provider not in PROVIDER_REGISTRY and provider != "openrouter" and not provider.startswith(CUSTOM_POOL_PREFIX):
         raise SystemExit(f"Unknown provider: {provider}")
