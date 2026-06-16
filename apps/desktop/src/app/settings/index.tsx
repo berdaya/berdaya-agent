@@ -9,6 +9,7 @@ import { Archive, Globe, Info, KeyRound, Settings2, Sparkles, Wrench, Zap } from
 import { notifyError } from '@/store/notifications'
 
 import { useRouteEnumParam } from '../hooks/use-route-enum-param'
+import { SkillsView } from '../skills'
 import { OverlayIconButton } from '../overlays/overlay-chrome'
 import { OverlayMain, OverlayNavItem, OverlaySidebar, OverlaySplitLayout } from '../overlays/overlay-split-layout'
 import { OverlayView } from '../overlays/overlay-view'
@@ -30,6 +31,7 @@ const SETTINGS_VIEWS: readonly SettingsViewId[] = [
   'gateway',
   'keys',
   'mcp',
+  'skills',
   'sessions',
   'about'
 ]
@@ -163,6 +165,12 @@ export function SettingsView({ gateway, onClose, onConfigSaved, onMainModelChang
             onClick={() => setActiveView('mcp')}
           />
           <OverlayNavItem
+            active={activeView === 'skills'}
+            icon={Sparkles}
+            label={t.settings.nav.skills}
+            onClick={() => setActiveView('skills')}
+          />
+          <OverlayNavItem
             active={activeView === 'sessions'}
             icon={Archive}
             label={t.settings.nav.archivedChats}
@@ -225,6 +233,8 @@ export function SettingsView({ gateway, onClose, onConfigSaved, onMainModelChang
             <KeysSettings view={keysView} />
           ) : activeView === 'mcp' ? (
             <McpSettings gateway={gateway} onConfigSaved={onConfigSaved} />
+          ) : activeView === 'skills' ? (
+            <SkillsView />
           ) : (
             <SessionsSettings />
           )}

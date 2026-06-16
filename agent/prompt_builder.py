@@ -1444,30 +1444,33 @@ def _truncate_content(content: str, filename: str, max_chars: int = CONTEXT_FILE
 
 
 def load_soul_md() -> Optional[str]:
-    """Load SOUL.md from HERMES_HOME and return its content, or None.
+    """Load PROJECT.md (or legacy SOUL.md) from HERMES_HOME and return its content, or None.
 
     Used as the agent identity (slot #1 in the system prompt).  When this
     returns content, ``build_context_files_prompt`` should be called with
-    ``skip_soul=True`` so SOUL.md isn't injected twice.
+    ``skip_soul=True`` so the identity file isn't injected twice.
     """
     try:
         from hermes_cli.config import ensure_hermes_home
         ensure_hermes_home()
     except Exception as e:
-        logger.debug("Could not ensure HERMES_HOME before loading SOUL.md: %s", e)
+        logger.debug("Could not ensure HERMES_HOME before loading project identity: %s", e)
 
-    soul_path = get_hermes_home() / "SOUL.md"
-    if not soul_path.exists():
+    from hermes_cli.project_md import identity_path_for_read
+
+    identity_path = identity_path_for_read(get_hermes_home())
+    if identity_path is None:
         return None
+    label = identity_path.name
     try:
-        content = soul_path.read_text(encoding="utf-8").strip()
+        content = identity_path.read_text(encoding="utf-8").strip()
         if not content:
             return None
-        content = _scan_context_content(content, "SOUL.md")
-        content = _truncate_content(content, "SOUL.md")
+        content = _scan_context_content(content, label)
+        content = _truncate_content(content, label)
         return content
     except Exception as e:
-        logger.debug("Could not read SOUL.md from %s: %s", soul_path, e)
+        logger.debug("Could not read %s from %s: %s", label, identity_path, e)
         return None
 
 

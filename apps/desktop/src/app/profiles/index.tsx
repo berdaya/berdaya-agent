@@ -82,14 +82,19 @@ export function ProfilesView({ onClose }: ProfilesViewProps) {
   }, [profiles, selectedName])
 
   const handleCreate = useCallback(
-    async (name: string, cloneFromDefault: boolean) => {
+    async (name: string, cloneFromDefault: boolean, description: string) => {
       const trimmed = name.trim()
 
       if (!isValidProfileName(trimmed)) {
         throw new Error(p.nameHint)
       }
 
-      await createProfile({ name: trimmed, clone_from_default: cloneFromDefault })
+      const trimmedDescription = description.trim()
+      await createProfile({
+        name: trimmed,
+        clone_from_default: cloneFromDefault,
+        ...(trimmedDescription ? { description: trimmedDescription } : {})
+      })
       notify({ kind: 'success', title: p.created, message: trimmed })
       setSelectedName(trimmed)
       await refresh()
@@ -180,7 +185,7 @@ export function ProfilesView({ onClose }: ProfilesViewProps) {
 
       <CreateProfileDialog
           onClose={() => setCreateOpen(false)}
-          onCreate={async (name, cloneFromDefault) => handleCreate(name, cloneFromDefault)}
+          onCreate={async (name, cloneFromDefault, description) => handleCreate(name, cloneFromDefault, description)}
           open={createOpen}
         />
 
@@ -331,7 +336,7 @@ function ProfileDetail({
             </dl>
           </header>
 
-          <SoulEditor profileName={profile.name} />
+          <ProjectEditor profileName={profile.name} />
         </div>
       </div>
 
@@ -357,7 +362,7 @@ function DetailRow({ children, label }: { children: React.ReactNode; label: stri
   )
 }
 
-function SoulEditor({ profileName }: { profileName: string }) {
+function ProjectEditor({ profileName }: { profileName: string }) {
   const { t } = useI18n()
   const p = t.profiles
   const [content, setContent] = useState('')
@@ -376,15 +381,15 @@ function SoulEditor({ profileName }: { profileName: string }) {
 
     void (async () => {
       try {
-        const soul = await getProfileSoul(profileName)
+        const project = await getProfileSoul(profileName)
 
         if (requestRef.current === profileName) {
-          setContent(soul.content)
-          setOriginal(soul.content)
+          setContent(project.content)
+          setOriginal(project.content)
         }
       } catch (err) {
         if (requestRef.current === profileName) {
-          setError(err instanceof Error ? err.message : p.failedLoadSoul)
+          setError(err instanceof Error ? err.message : p.failedLoadProject)
         }
       } finally {
         if (requestRef.current === profileName) {
@@ -404,9 +409,9 @@ function SoulEditor({ profileName }: { profileName: string }) {
     try {
       await updateProfileSoul(profileName, content)
       setOriginal(content)
-      notify({ kind: 'success', title: p.soulSaved, message: profileName })
+      notify({ kind: 'success', title: p.projectSaved, message: profileName })
     } catch (err) {
-      setError(err instanceof Error ? err.message : p.failedSaveSoul)
+      setError(err instanceof Error ? err.message : p.failedSaveProject)
     } finally {
       setSaving(false)
     }
@@ -416,19 +421,19 @@ function SoulEditor({ profileName }: { profileName: string }) {
     <section className="space-y-2">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h4 className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">SOUL.md</h4>
-          <p className="text-xs text-muted-foreground">{p.soulDesc}</p>
+          <h4 className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">PROJECT.md</h4>
+          <p className="text-xs text-muted-foreground">{p.projectDesc}</p>
         </div>
         {dirty && <span className="text-[0.65rem] text-muted-foreground">{p.unsavedChanges}</span>}
       </div>
 
       {loading ? (
-        <PageLoader className="min-h-44" label={p.loadingSoul} />
+        <PageLoader className="min-h-44" label={p.loadingProject} />
       ) : (
         <Textarea
           className="min-h-72 font-mono text-xs leading-5"
           onChange={event => setContent(event.target.value)}
-          placeholder={isEmpty ? p.emptySoul : undefined}
+          placeholder={isEmpty ? p.emptyProject : undefined}
           value={content}
         />
       )}
@@ -443,7 +448,7 @@ function SoulEditor({ profileName }: { profileName: string }) {
       <div className="flex justify-end">
         <Button disabled={!dirty || saving || loading} onClick={() => void handleSave()} size="sm">
           <Save />
-          {saving ? p.saving : p.saveSoul}
+          {saving ? p.saving : p.saveProject}
         </Button>
       </div>
     </section>
@@ -456,12 +461,13 @@ function CreateProfileDialog({
   open
 }: {
   onClose: () => void
-  onCreate: (name: string, cloneFromDefault: boolean) => Promise<void>
+  onCreate: (name: string, cloneFromDefault: boolean, description: string) => Promise<void>
   open: boolean
 }) {
   const { t } = useI18n()
   const p = t.profiles
   const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
   const [cloneFromDefault, setCloneFromDefault] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<null | string>(null)
@@ -472,6 +478,7 @@ function CreateProfileDialog({
     }
 
     setName('')
+    setDescription('')
     setCloneFromDefault(true)
     setError(null)
     setSaving(false)
@@ -493,7 +500,7 @@ function CreateProfileDialog({
     setError(null)
 
     try {
-      await onCreate(trimmed, cloneFromDefault)
+      await onCreate(trimmed, cloneFromDefault, description)
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : p.failedCreate)
@@ -512,20 +519,34 @@ function CreateProfileDialog({
 
         <form className="grid gap-4" onSubmit={handleSubmit}>
           <div className="grid gap-1.5">
-            <label className="text-xs font-medium" htmlFor="new-profile-name">
+            <label className="text-xs font-medium" htmlFor="new-project-name">
               {p.nameLabel}
             </label>
             <Input
               aria-invalid={invalid}
               autoFocus
-              id="new-profile-name"
+              id="new-project-name"
               onChange={event => setName(event.target.value)}
-              placeholder="my-profile"
+              placeholder="my-project"
               value={name}
             />
             <p className={cn('text-[0.66rem] leading-4', invalid ? 'text-destructive' : 'text-muted-foreground')}>
               {p.nameHint}
             </p>
+          </div>
+
+          <div className="grid gap-1.5">
+            <label className="text-xs font-medium" htmlFor="overlay-new-project-description">
+              {p.descriptionLabel}{' '}
+              <span className="font-normal text-muted-foreground">- {p.descriptionOptional}</span>
+            </label>
+            <Textarea
+              className="min-h-20 text-sm leading-5"
+              id="overlay-new-project-description"
+              onChange={event => setDescription(event.target.value)}
+              placeholder={p.descriptionPlaceholder}
+              value={description}
+            />
           </div>
 
           <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border/40 bg-background/50 px-3 py-2 text-sm">

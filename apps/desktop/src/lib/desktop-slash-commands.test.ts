@@ -145,7 +145,7 @@ describe('desktop slash command curation', () => {
 
   it('explains known commands that desktop owns elsewhere', () => {
     expect(desktopSlashUnavailableMessage('/model sonnet')).toContain('model picker')
-    expect(desktopSlashUnavailableMessage('/skills')).toContain('desktop sidebar')
+    expect(desktopSlashUnavailableMessage('/skills')).toContain('Settings')
     expect(desktopSlashUnavailableMessage('/clear')).toContain('terminal interface')
   })
 

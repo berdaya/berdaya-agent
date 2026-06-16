@@ -56,6 +56,7 @@ _PROFILE_DIRS = [
 _CLONE_CONFIG_FILES = [
     "config.yaml",
     ".env",
+    "PROJECT.md",
     "SOUL.md",
 ]
 
@@ -834,13 +835,13 @@ def create_profile(
                     dst.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(src, dst)
 
-    # Seed a default SOUL.md so the user has a file to customize immediately.
+    # Seed a default PROJECT.md so the user has a file to customize immediately.
     # Skipped when the profile already has one (from --clone / --clone-all).
-    soul_path = profile_dir / "SOUL.md"
-    if not soul_path.exists():
+    project_path = profile_dir / "PROJECT.md"
+    if not project_path.exists() and not (profile_dir / "SOUL.md").exists():
         try:
-            from hermes_cli.default_soul import DEFAULT_SOUL_MD
-            soul_path.write_text(DEFAULT_SOUL_MD, encoding="utf-8")
+            from hermes_cli.project_md import DEFAULT_PROJECT_MD
+            project_path.write_text(DEFAULT_PROJECT_MD, encoding="utf-8")
         except Exception:
             pass  # best-effort — don't fail profile creation over this
 

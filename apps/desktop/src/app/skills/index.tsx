@@ -74,7 +74,7 @@ interface SkillsViewProps extends React.ComponentProps<'section'> {
 
 export function SkillsView({ setStatusbarItemGroup: _setStatusbarItemGroup, ...props }: SkillsViewProps) {
   const { t } = useI18n()
-  const [mode, setMode] = useRouteEnumParam('tab', SKILLS_MODES, 'skills')
+  const [mode, setMode] = useRouteEnumParam('skillsTab', SKILLS_MODES, 'skills')
 
   const [query, setQuery] = useState('')
   const [skills, setSkills] = useState<SkillInfo[] | null>(null)

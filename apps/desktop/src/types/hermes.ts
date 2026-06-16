@@ -472,6 +472,7 @@ export interface ProfileCreatePayload {
   clone_all?: boolean
   clone_from?: string
   clone_from_default?: boolean
+  description?: string
   name: string
   no_skills?: boolean
 }

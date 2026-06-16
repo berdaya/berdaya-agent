@@ -8555,23 +8555,26 @@ async def delete_profile_endpoint(name: str):
 
 @app.get("/api/profiles/{name}/soul")
 async def get_profile_soul(name: str):
-    soul_path = _resolve_profile_dir(name) / "SOUL.md"
-    if soul_path.exists():
-        try:
-            return {"content": soul_path.read_text(encoding="utf-8"), "exists": True}
-        except OSError as e:
-            raise HTTPException(status_code=500, detail=f"Could not read SOUL.md: {e}")
-    return {"content": "", "exists": False}
+    from hermes_cli.project_md import read_identity_content
+
+    profile_dir = _resolve_profile_dir(name)
+    try:
+        content, exists = read_identity_content(profile_dir)
+    except OSError as e:
+        raise HTTPException(status_code=500, detail=f"Could not read PROJECT.md: {e}")
+    return {"content": content, "exists": exists}
 
 
 @app.put("/api/profiles/{name}/soul")
 async def update_profile_soul(name: str, body: ProfileSoulUpdate):
-    soul_path = _resolve_profile_dir(name) / "SOUL.md"
+    from hermes_cli.project_md import write_identity_content
+
+    profile_dir = _resolve_profile_dir(name)
     try:
-        soul_path.write_text(body.content, encoding="utf-8")
+        write_identity_content(profile_dir, body.content)
     except OSError as e:
         _log.exception("PUT /api/profiles/%s/soul failed", name)
-        raise HTTPException(status_code=500, detail=f"Could not write SOUL.md: {e}")
+        raise HTTPException(status_code=500, detail=f"Could not write PROJECT.md: {e}")
     return {"ok": True}
 
 

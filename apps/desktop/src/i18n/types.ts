@@ -200,6 +200,7 @@ export interface Translations {
       keysTools: string
       keysSettings: string
       mcp: string
+      skills: string
       archivedChats: string
       about: string
     }
@@ -675,16 +676,15 @@ export interface Translations {
     modelLabel: string
     skillsLabel: string
     notSet: string
-    soulDesc: string
-    soulOptional: string
-    soulPlaceholder: (mode: string) => string
-    soulPlaceholderCloned: string
-    soulPlaceholderEmpty: string
+    projectDesc: string
+    descriptionLabel: string
+    descriptionOptional: string
+    descriptionPlaceholder: string
     unsavedChanges: string
-    loadingSoul: string
-    emptySoul: string
+    loadingProject: string
+    emptyProject: string
     saving: string
-    saveSoul: string
+    saveProject: string
     deleteTitle: string
     deleteDescPrefix: string
     deleteDescMid: string
@@ -707,12 +707,12 @@ export interface Translations {
     renamed: string
     deleted: string
     setupCopied: string
-    soulSaved: string
+    projectSaved: string
     failedLoad: string
     failedDelete: string
     failedCopy: string
-    failedLoadSoul: string
-    failedSaveSoul: string
+    failedLoadProject: string
+    failedSaveProject: string
     failedCreate: string
     failedRename: string
   }

@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { createProfile, updateProfileSoul } from '@/hermes'
+import { createProfile } from '@/hermes'
 import { useI18n } from '@/i18n'
 import { AlertTriangle } from '@/lib/icons'
 import { cn } from '@/lib/utils'
@@ -17,9 +17,8 @@ export function isValidProfileName(name: string): boolean {
   return PROFILE_NAME_RE.test(name.trim())
 }
 
-// Self-contained create flow (name + clone toggle + optional SOUL.md). Owns the
-// createProfile/updateProfileSoul calls so every caller just refreshes/selects
-// via onCreated. SOUL left blank keeps the cloned/blank persona untouched.
+// Self-contained create flow (project name + description + clone toggle). Owns the
+// createProfile call so every caller just refreshes/selects via onCreated.
 export function CreateProfileDialog({
   onClose,
   onCreated,
@@ -32,8 +31,8 @@ export function CreateProfileDialog({
   const { t } = useI18n()
   const p = t.profiles
   const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
   const [cloneFromDefault, setCloneFromDefault] = useState(true)
-  const [soul, setSoul] = useState('')
   const [status, setStatus] = useState<'done' | 'idle' | 'saving'>('idle')
   const [error, setError] = useState<null | string>(null)
 
@@ -43,8 +42,8 @@ export function CreateProfileDialog({
     }
 
     setName('')
+    setDescription('')
     setCloneFromDefault(true)
-    setSoul('')
     setError(null)
     setStatus('idle')
   }, [open])
@@ -66,11 +65,12 @@ export function CreateProfileDialog({
     setError(null)
 
     try {
-      await createProfile({ name: trimmed, clone_from_default: cloneFromDefault })
-
-      if (soul.trim()) {
-        await updateProfileSoul(trimmed, soul)
-      }
+      const trimmedDescription = description.trim()
+      await createProfile({
+        name: trimmed,
+        clone_from_default: cloneFromDefault,
+        ...(trimmedDescription ? { description: trimmedDescription } : {})
+      })
 
       await onCreated?.(trimmed)
       setStatus('done')
@@ -91,20 +91,34 @@ export function CreateProfileDialog({
 
         <form className="grid gap-4" onSubmit={handleSubmit}>
           <div className="grid gap-1.5">
-            <label className="text-xs font-medium" htmlFor="new-profile-name">
+            <label className="text-xs font-medium" htmlFor="new-project-name">
               {p.nameLabel}
             </label>
             <Input
               aria-invalid={invalid}
               autoFocus
-              id="new-profile-name"
+              id="new-project-name"
               onChange={event => setName(event.target.value)}
-              placeholder="my-profile"
+              placeholder="my-project"
               value={name}
             />
             <p className={cn('text-[0.66rem] leading-4', invalid ? 'text-destructive' : 'text-muted-foreground')}>
               {p.nameHint}
             </p>
+          </div>
+
+          <div className="grid gap-1.5">
+            <label className="text-xs font-medium" htmlFor="new-project-description">
+              {p.descriptionLabel}{' '}
+              <span className="font-normal text-muted-foreground">- {p.descriptionOptional}</span>
+            </label>
+            <Textarea
+              className="min-h-20 text-sm leading-5"
+              id="new-project-description"
+              onChange={event => setDescription(event.target.value)}
+              placeholder={p.descriptionPlaceholder}
+              value={description}
+            />
           </div>
 
           <label className="flex cursor-pointer select-none items-start gap-2.5 px-0.5 py-1">
@@ -118,19 +132,6 @@ export function CreateProfileDialog({
               <span className="text-xs text-muted-foreground">{p.cloneFromDefaultDesc}</span>
             </span>
           </label>
-
-          <div className="grid gap-1.5">
-            <label className="text-xs font-medium" htmlFor="new-profile-soul">
-              SOUL.md <span className="font-normal text-muted-foreground">- {p.soulOptional}</span>
-            </label>
-            <Textarea
-              className="min-h-28 font-mono text-xs leading-5"
-              id="new-profile-soul"
-              onChange={event => setSoul(event.target.value)}
-              placeholder={p.soulPlaceholder(cloneFromDefault ? p.soulPlaceholderCloned : p.soulPlaceholderEmpty)}
-              value={soul}
-            />
-          </div>
 
           {error && (
             <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">

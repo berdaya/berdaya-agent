@@ -84,7 +84,7 @@ const stepThroughCells: Modifier = ({ containerNodeRect, draggingNodeRect, trans
 // left, the colored named profiles scrolling between, and Manage pinned right.
 // The active profile pops in its own color — the "where am I" cue. Single-
 // profile users see the "+" (create their first profile) and the Manage
-// overflow (edit the default profile's SOUL.md); the colored named squares
+// overflow (edit the default project's PROJECT.md); the colored named squares
 // and the default↔all toggle only appear once a second profile exists.
 export function ProfileRail() {
   const { t } = useI18n()
@@ -195,7 +195,7 @@ export function ProfileRail() {
   }, [createRequest])
 
   return (
-    <div aria-label="Profiles" className="flex items-center gap-0.5" role="tablist">
+    <div aria-label="Projects" className="flex items-center gap-0.5" role="tablist">
       {/* One button toggles default ↔ all: home face when scoped to a profile,
           layers face when showing everything. Pinned left like Manage is right.
           Hidden until a second profile exists. */}
@@ -270,9 +270,9 @@ export function ProfileRail() {
       </div>
 
       {/* Always reachable, even with only the default profile: the manage
-          overlay is the only place to edit a profile's SOUL.md, and a
-          single-profile user must be able to edit the default's persona
-          without first creating a throwaway second profile. */}
+          overlay is the only place to edit a project's PROJECT.md, and a
+          single-project user must be able to edit the default's instructions
+          without first creating a throwaway second project. */}
       <ProfilePill active={false} glyph="ellipsis" label={p.manageProfiles} onSelect={() => navigate(PROFILES_ROUTE)} />
 
       {/* Land in the new profile on a fresh chat (selectProfile triggers the

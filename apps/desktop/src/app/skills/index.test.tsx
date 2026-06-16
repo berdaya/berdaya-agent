@@ -43,7 +43,7 @@ function toolset(overrides: Record<string, unknown> = {}) {
 function renderSkills() {
   return import('./index').then(({ SkillsView }) =>
     render(
-      <MemoryRouter initialEntries={['/skills?tab=toolsets']}>
+      <MemoryRouter initialEntries={['/settings?tab=skills&skillsTab=toolsets']}>
         <SkillsView />
       </MemoryRouter>
     )
