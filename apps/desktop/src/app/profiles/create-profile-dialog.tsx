@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 
-import { isValidProfileName } from '@/app/profiles/create-profile-dialog'
 import { WorkspaceDirField } from '@/app/profiles/workspace-dir-field'
 import { ActionStatus } from '@/components/ui/action-status'
 import { Button } from '@/components/ui/button'

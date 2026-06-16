@@ -9,6 +9,7 @@ import {
   getGlobalModelInfo,
   getGlobalModelOptions,
   getRecommendedDefaultModel,
+  revealEnvVar,
   setEnvVar,
   setModelAssignment
 } from '@/hermes'
@@ -110,6 +111,7 @@ export function ModelSettings({ onMainModelChanged }: ModelSettingsProps) {
   // editable after first save (Berdaya Cloud/Local share BERDAYA_API_KEY).
   const [providerKeyEnv, setProviderKeyEnv] = useState<EnvVarInfo | null>(null)
   const [keyEdits, setKeyEdits] = useState<Record<string, string>>({})
+  const [keyRevealed, setKeyRevealed] = useState<Record<string, string>>({})
   const [keySaving, setKeySaving] = useState('')
 
   const refresh = useCallback(async () => {
@@ -158,6 +160,7 @@ export function ModelSettings({ onMainModelChanged }: ModelSettingsProps) {
 
   useEffect(() => {
     setKeyEdits({})
+    setKeyRevealed({})
     setProviderKeyEnv(null)
 
     if (!isApiKeyProvider) {
@@ -244,6 +247,7 @@ export function ModelSettings({ onMainModelChanged }: ModelSettingsProps) {
       try {
         await setEnvVar(varKey, value)
         setKeyEdits(prev => withoutKey(prev, varKey))
+        setKeyRevealed(prev => withoutKey(prev, varKey))
         await refreshProviderKeyEnv(varKey)
 
         if (!slug) {
@@ -286,6 +290,7 @@ export function ModelSettings({ onMainModelChanged }: ModelSettingsProps) {
       try {
         await deleteEnvVar(varKey)
         setKeyEdits(prev => withoutKey(prev, varKey))
+        setKeyRevealed(prev => withoutKey(prev, varKey))
         await refreshProviderKeyEnv(varKey)
 
         const options = await getGlobalModelOptions()
@@ -299,15 +304,34 @@ export function ModelSettings({ onMainModelChanged }: ModelSettingsProps) {
     [refreshProviderKeyEnv]
   )
 
+  const revealProviderApiKey = useCallback(async (varKey: string) => {
+    if (keyRevealed[varKey]) {
+      setKeyRevealed(prev => withoutKey(prev, varKey))
+
+      return
+    }
+
+    setError('')
+
+    try {
+      const result = await revealEnvVar(varKey)
+      setKeyRevealed(prev => ({ ...prev, [varKey]: result.value }))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }, [keyRevealed])
+
   const providerKeyRowProps = useMemo<KeyRowProps>(
     () => ({
       edits: keyEdits,
+      revealed: keyRevealed,
       saving: keySaving,
       setEdits: setKeyEdits,
       onSave: saveProviderApiKey,
-      onClear: clearProviderApiKey
+      onClear: clearProviderApiKey,
+      onReveal: revealProviderApiKey
     }),
-    [clearProviderApiKey, keyEdits, keySaving, saveProviderApiKey]
+    [clearProviderApiKey, keyEdits, keyRevealed, keySaving, revealProviderApiKey, saveProviderApiKey]
   )
 
   // OAuth / external providers can't be activated with a pasted key — hand off
