@@ -1021,7 +1021,14 @@ export const zhHant = defineLocale({
     failedLoadProject: '載入 PROJECT.md 失敗',
     failedSaveProject: '儲存 PROJECT.md 失敗',
     failedCreate: '建立專案失敗',
-    failedRename: '重新命名專案失敗'
+    failedRename: '重新命名專案失敗',
+    workspaceLabel: '工作區資料夾',
+    workspaceHint: '終端機指令與檔案工具會在此資料夾中執行。',
+    workspaceRequired: '請為此專案選擇一個工作區資料夾。',
+    chooseWorkspace: '選擇資料夾…',
+    workspacePlaceholder: '未選擇資料夾',
+    firstProjectTitle: '建立你的第一個專案',
+    firstProjectDesc: '專案會隔離聊天、設定與檔案。請選擇此專案的工作區資料夾。'
   },
 
   cron: {

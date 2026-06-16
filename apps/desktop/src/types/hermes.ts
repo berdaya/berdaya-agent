@@ -475,6 +475,7 @@ export interface ProfileCreatePayload {
   description?: string
   name: string
   no_skills?: boolean
+  workspace_dir?: string
 }
 
 export interface ProfileInfo {
@@ -485,6 +486,7 @@ export interface ProfileInfo {
   path: string
   provider: null | string
   skill_count: number
+  workspace_dir?: string
 }
 
 export interface ProfileSetupCommand {

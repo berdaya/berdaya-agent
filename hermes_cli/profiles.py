@@ -501,6 +501,10 @@ class ProfileInfo:
     # surfaces a "review" badge in this case so the user can edit or
     # accept.
     description_auto: bool = False
+    # Absolute filesystem path where this project's agent tools run (terminal,
+    # file browser, patches). Persisted in ``profile.yaml`` and mirrored to
+    # ``config.yaml`` ``terminal.cwd`` so subprocess launch paths stay aligned.
+    workspace_dir: str = ""
 
 
 def _read_distribution_meta(profile_dir: Path) -> tuple:
@@ -597,18 +601,19 @@ def read_profile_meta(profile_dir: Path) -> dict:
     """
     path = _profile_yaml_path(profile_dir)
     if not path.is_file():
-        return {"description": "", "description_auto": False}
+        return {"description": "", "description_auto": False, "workspace_dir": ""}
     try:
         import yaml
         with open(path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
     except Exception:
-        return {"description": "", "description_auto": False}
+        return {"description": "", "description_auto": False, "workspace_dir": ""}
     if not isinstance(data, dict):
-        return {"description": "", "description_auto": False}
+        return {"description": "", "description_auto": False, "workspace_dir": ""}
     return {
         "description": str(data.get("description") or "").strip(),
         "description_auto": bool(data.get("description_auto", False)),
+        "workspace_dir": str(data.get("workspace_dir") or "").strip(),
     }
 
 
@@ -617,6 +622,7 @@ def write_profile_meta(
     *,
     description: Optional[str] = None,
     description_auto: Optional[bool] = None,
+    workspace_dir: Optional[str] = None,
 ) -> None:
     """Update ``<profile_dir>/profile.yaml`` in place.
 
@@ -641,8 +647,90 @@ def write_profile_meta(
         existing["description"] = description.strip()
     if description_auto is not None:
         existing["description_auto"] = bool(description_auto)
+    if workspace_dir is not None:
+        existing["workspace_dir"] = workspace_dir.strip()
     with open(path, "w", encoding="utf-8") as f:
         yaml.safe_dump(existing, f, sort_keys=False, default_flow_style=False)
+
+
+def _read_terminal_cwd(profile_dir: Path) -> Optional[str]:
+    """Read ``terminal.cwd`` from a profile's config.yaml when it is absolute."""
+    config_path = profile_dir / "config.yaml"
+    if not config_path.is_file():
+        return None
+    try:
+        import yaml
+        with open(config_path, "r", encoding="utf-8") as f:
+            cfg = yaml.safe_load(f) or {}
+    except Exception:
+        return None
+    if not isinstance(cfg, dict):
+        return None
+    terminal_cfg = cfg.get("terminal")
+    if not isinstance(terminal_cfg, dict):
+        return None
+    raw = str(terminal_cfg.get("cwd") or "").strip()
+    if not raw or raw in {".", "auto", "cwd"}:
+        return None
+    return os.path.abspath(os.path.expanduser(raw))
+
+
+def _write_profile_terminal_cwd(profile_dir: Path, cwd: str) -> None:
+    """Mirror a workspace path into the profile's ``terminal.cwd`` config."""
+    import yaml
+    config_path = profile_dir / "config.yaml"
+    cfg: dict = {}
+    if config_path.is_file():
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                loaded = yaml.safe_load(f) or {}
+            if isinstance(loaded, dict):
+                cfg = loaded
+        except Exception:
+            cfg = {}
+    terminal_cfg = cfg.get("terminal")
+    if not isinstance(terminal_cfg, dict):
+        terminal_cfg = {}
+        cfg["terminal"] = terminal_cfg
+    terminal_cfg["cwd"] = cwd
+    with open(config_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(cfg, f, sort_keys=False, default_flow_style=False)
+
+
+def resolve_profile_workspace_dir(profile_dir: Path) -> str:
+    """Return the resolved workspace directory for ``profile_dir``, or ""."""
+    meta = read_profile_meta(profile_dir)
+    workspace = str(meta.get("workspace_dir") or "").strip()
+    if workspace:
+        try:
+            return str(Path(os.path.expanduser(workspace)).resolve())
+        except (OSError, ValueError):
+            pass
+    terminal_cwd = _read_terminal_cwd(profile_dir)
+    return terminal_cwd or ""
+
+
+def set_profile_workspace_dir(profile_dir: Path, workspace_dir: str) -> str:
+    """Create/validate a project workspace and persist it to profile metadata."""
+    raw = str(workspace_dir or "").strip()
+    if not raw:
+        raise ValueError("workspace_dir is required")
+    try:
+        resolved = Path(os.path.expanduser(raw)).resolve()
+    except (OSError, ValueError) as exc:
+        raise ValueError(f"Invalid workspace directory: {workspace_dir}") from exc
+    if not resolved.is_dir():
+        try:
+            resolved.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            raise ValueError(f"Could not create workspace directory: {resolved}") from exc
+    resolved_str = str(resolved)
+    write_profile_meta(profile_dir, workspace_dir=resolved_str)
+    try:
+        _write_profile_terminal_cwd(profile_dir, resolved_str)
+    except Exception:
+        pass  # profile.yaml is authoritative; config mirror is best-effort
+    return resolved_str
 
 
 # ---------------------------------------------------------------------------
@@ -674,6 +762,7 @@ def list_profiles() -> List[ProfileInfo]:
             distribution_source=dist_source,
             description=meta.get("description", ""),
             description_auto=meta.get("description_auto", False),
+            workspace_dir=resolve_profile_workspace_dir(default_home),
         ))
 
     # Named profiles
@@ -712,6 +801,7 @@ def list_profiles() -> List[ProfileInfo]:
                 distribution_source=dist_source,
                 description=meta.get("description", ""),
                 description_auto=meta.get("description_auto", False),
+                workspace_dir=resolve_profile_workspace_dir(entry),
             ))
 
     return profiles
@@ -725,6 +815,7 @@ def create_profile(
     no_alias: bool = False,
     no_skills: bool = False,
     description: Optional[str] = None,
+    workspace_dir: Optional[str] = None,
 ) -> Path:
     """Create a new profile directory.
 
@@ -870,6 +961,14 @@ def create_profile(
             )
         except Exception:
             pass  # non-fatal — user can describe later with `hermes profile describe`
+
+    if workspace_dir and workspace_dir.strip():
+        try:
+            set_profile_workspace_dir(profile_dir, workspace_dir)
+        except ValueError:
+            raise
+        except Exception as exc:
+            raise ValueError(f"Could not set workspace directory: {exc}") from exc
 
     # Phase 4: when running inside a container under s6, register the
     # new profile's gateway as a runtime s6 service so

@@ -1109,7 +1109,14 @@ export const zh: Translations = {
     failedLoadProject: '加载 PROJECT.md 失败',
     failedSaveProject: '保存 PROJECT.md 失败',
     failedCreate: '创建项目失败',
-    failedRename: '重命名项目失败'
+    failedRename: '重命名项目失败',
+    workspaceLabel: '工作区文件夹',
+    workspaceHint: '终端命令和文件工具将在此文件夹中运行。',
+    workspaceRequired: '请为该项目选择一个工作区文件夹。',
+    chooseWorkspace: '选择文件夹…',
+    workspacePlaceholder: '未选择文件夹',
+    firstProjectTitle: '创建你的第一个项目',
+    firstProjectDesc: '项目会隔离聊天、设置和文件。请选择一个工作区文件夹，作为该项目的工作目录。'
   },
 
   cron: {

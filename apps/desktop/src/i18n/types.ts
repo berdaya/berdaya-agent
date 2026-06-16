@@ -715,6 +715,13 @@ export interface Translations {
     failedSaveProject: string
     failedCreate: string
     failedRename: string
+    workspaceLabel: string
+    workspaceHint: string
+    workspaceRequired: string
+    chooseWorkspace: string
+    workspacePlaceholder: string
+    firstProjectTitle: string
+    firstProjectDesc: string
   }
 
   cron: {

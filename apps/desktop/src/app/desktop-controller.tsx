@@ -6,6 +6,7 @@ import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 're
 import { BootFailureOverlay } from '@/components/boot-failure-overlay'
 import { DesktopInstallOverlay } from '@/components/desktop-install-overlay'
 import { DesktopOnboardingOverlay } from '@/components/desktop-onboarding-overlay'
+import { FirstProjectOverlay } from '@/components/first-project-overlay'
 import { GatewayConnectingOverlay } from '@/components/gateway-connecting-overlay'
 import { Pane, PaneMain } from '@/components/pane-shell'
 import { useMediaQuery } from '@/hooks/use-media-query'
@@ -41,7 +42,9 @@ import {
   $activeGatewayProfile,
   $freshSessionRequest,
   $profileScope,
+  $profiles,
   ALL_PROFILES,
+  needsFirstProjectSetup,
   normalizeProfileKey,
   refreshActiveProfile
 } from '../store/profile'
@@ -198,6 +201,8 @@ export function DesktopController() {
   const terminalTakeover = useStore($terminalTakeover)
   const panesFlipped = useStore($panesFlipped)
   const profileScope = useStore($profileScope)
+  const profiles = useStore($profiles)
+  const needsFirstProject = needsFirstProjectSetup(profiles)
   // Below SIDEBAR_COLLAPSE_BREAKPOINT_PX there's no room for a docked rail —
   // collapse both sidebars (without touching their stored open state) so the
   // hover-reveal overlay becomes the way in. Restores once it's wide again.
@@ -818,8 +823,11 @@ export function DesktopController() {
     <>
       {!isSecondaryWindow() && <DesktopInstallOverlay />}
       {!isSecondaryWindow() && (
+        <FirstProjectOverlay enabled={gatewayState === 'open' && needsFirstProject} />
+      )}
+      {!isSecondaryWindow() && (
         <DesktopOnboardingOverlay
-          enabled={gatewayState === 'open'}
+          enabled={gatewayState === 'open' && !needsFirstProject}
           onCompleted={() => {
             void refreshHermesConfig()
             void refreshCurrentModel()

@@ -1054,7 +1054,15 @@ export const ja = defineLocale({
     failedLoadProject: 'PROJECT.md の読み込みに失敗しました',
     failedSaveProject: 'PROJECT.md の保存に失敗しました',
     failedCreate: 'プロジェクトの作成に失敗しました',
-    failedRename: 'プロジェクト名の変更に失敗しました'
+    failedRename: 'プロジェクト名の変更に失敗しました',
+    workspaceLabel: 'ワークスペースフォルダー',
+    workspaceHint: 'ターミナルとファイルツールはこのフォルダーで動作します。',
+    workspaceRequired: 'このプロジェクトのワークスペースフォルダーを選択してください。',
+    chooseWorkspace: 'フォルダーを選択…',
+    workspacePlaceholder: 'フォルダー未選択',
+    firstProjectTitle: '最初のプロジェクトを作成',
+    firstProjectDesc:
+      'プロジェクトごとにチャット、設定、ファイルを分離します。このプロジェクトで作業するフォルダーを選んでください。'
   },
 
   cron: {

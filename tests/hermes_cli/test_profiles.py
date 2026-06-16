@@ -28,6 +28,9 @@ from hermes_cli.profiles import (
     rename_profile,
     export_profile,
     import_profile,
+    resolve_profile_workspace_dir,
+    set_profile_workspace_dir,
+    read_profile_meta,
     _get_profiles_root,
     _get_default_hermes_home,
     seed_profile_skills,
@@ -1359,3 +1362,28 @@ class TestEdgeCases:
             delete_profile("coder", yes=True)
 
         assert get_active_profile() == "default"
+
+
+class TestProfileWorkspaceDir:
+    def test_create_profile_persists_workspace(self, profile_env, tmp_path):
+        workspace = tmp_path / "projects" / "demo"
+        profile_dir = create_profile(
+            "demo",
+            no_alias=True,
+            no_skills=True,
+            workspace_dir=str(workspace),
+        )
+        assert workspace.is_dir()
+        assert resolve_profile_workspace_dir(profile_dir) == str(workspace.resolve())
+        meta = read_profile_meta(profile_dir)
+        assert meta["workspace_dir"] == str(workspace.resolve())
+
+    def test_set_profile_workspace_dir_updates_config(self, profile_env, tmp_path):
+        profile_dir = create_profile("demo", no_alias=True, no_skills=True)
+        workspace = tmp_path / "workspace"
+        resolved = set_profile_workspace_dir(profile_dir, str(workspace))
+        assert resolved == str(workspace.resolve())
+        assert resolve_profile_workspace_dir(profile_dir) == resolved
+        import yaml
+        cfg = yaml.safe_load((profile_dir / "config.yaml").read_text(encoding="utf-8"))
+        assert cfg["terminal"]["cwd"] == resolved

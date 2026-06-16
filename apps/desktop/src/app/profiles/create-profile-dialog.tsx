@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 
+import { isValidProfileName } from '@/app/profiles/create-profile-dialog'
+import { WorkspaceDirField } from '@/app/profiles/workspace-dir-field'
 import { ActionStatus } from '@/components/ui/action-status'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -32,6 +34,7 @@ export function CreateProfileDialog({
   const p = t.profiles
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [workspaceDir, setWorkspaceDir] = useState('')
   const [cloneFromDefault, setCloneFromDefault] = useState(true)
   const [status, setStatus] = useState<'done' | 'idle' | 'saving'>('idle')
   const [error, setError] = useState<null | string>(null)
@@ -43,6 +46,7 @@ export function CreateProfileDialog({
 
     setName('')
     setDescription('')
+    setWorkspaceDir('')
     setCloneFromDefault(true)
     setError(null)
     setStatus('idle')
@@ -50,6 +54,7 @@ export function CreateProfileDialog({
 
   const trimmed = name.trim()
   const invalid = trimmed !== '' && !isValidProfileName(trimmed)
+  const missingWorkspace = !workspaceDir.trim()
   const busy = status === 'saving' || status === 'done'
 
   async function handleSubmit(event: React.FormEvent) {
@@ -57,6 +62,12 @@ export function CreateProfileDialog({
 
     if (!trimmed || invalid) {
       setError(invalid ? p.invalidName(p.nameHint) : p.nameRequired)
+
+      return
+    }
+
+    if (missingWorkspace) {
+      setError(p.workspaceRequired)
 
       return
     }
@@ -69,6 +80,7 @@ export function CreateProfileDialog({
       await createProfile({
         name: trimmed,
         clone_from_default: cloneFromDefault,
+        workspace_dir: workspaceDir.trim(),
         ...(trimmedDescription ? { description: trimmedDescription } : {})
       })
 
@@ -121,6 +133,13 @@ export function CreateProfileDialog({
             />
           </div>
 
+          <WorkspaceDirField
+            invalid={missingWorkspace && Boolean(error)}
+            nameHint={trimmed || undefined}
+            onChange={setWorkspaceDir}
+            value={workspaceDir}
+          />
+
           <label className="flex cursor-pointer select-none items-start gap-2.5 px-0.5 py-1">
             <Checkbox
               checked={cloneFromDefault}
@@ -144,7 +163,7 @@ export function CreateProfileDialog({
             <Button disabled={busy} onClick={onClose} type="button" variant="ghost">
               {t.common.cancel}
             </Button>
-            <Button disabled={busy || !trimmed || invalid} type="submit">
+            <Button disabled={busy || !trimmed || invalid || missingWorkspace} type="submit">
               <ActionStatus busy={p.creating} done={p.created} idle={p.createAction} state={status} />
             </Button>
           </DialogFooter>

@@ -2,6 +2,7 @@ import { atom, computed } from 'nanostores'
 
 import { getProfiles, setApiRequestProfile } from '@/hermes'
 import { queryClient } from '@/lib/query-client'
+import { setCurrentCwd } from '@/store/session'
 import {
   arraysEqual,
   persistBoolean,
@@ -116,6 +117,39 @@ export async function refreshActiveProfile(): Promise<void> {
   }
 }
 
+export function needsFirstProjectSetup(profiles: ProfileInfo[]): boolean {
+  return profiles.filter(profile => !profile.is_default).length === 0
+}
+
+export function workspaceDirForProfile(profileName: string): string {
+  const target = normalizeProfileKey(profileName)
+  const profile = $profiles.get().find(row => normalizeProfileKey(row.name) === target)
+
+  return profile?.workspace_dir?.trim() || ''
+}
+
+export async function applyProfileWorkspace(profileName: string): Promise<void> {
+  const workspace = workspaceDirForProfile(profileName)
+
+  if (!workspace) {
+    return
+  }
+
+  const sanitize = window.hermesDesktop?.sanitizeWorkspaceCwd
+
+  if (!sanitize) {
+    setCurrentCwd(workspace)
+
+    return
+  }
+
+  const { cwd } = await sanitize(workspace)
+
+  if (cwd) {
+    setCurrentCwd(cwd)
+  }
+}
+
 // Persist the choice and relaunch the backend under the new HERMES_HOME. The
 // main process reloads the window, so this normally never returns to the caller
 // (the renderer is torn down). We optimistically reflect the selection first so
@@ -218,6 +252,7 @@ export async function ensureGatewayProfile(profile: string | null | undefined): 
     // the active gateway at it — without closing the profile you came from.
     await ensureGatewayForProfile(target)
     $activeGatewayProfile.set(target)
+    await applyProfileWorkspace(target)
   })()
 
   try {

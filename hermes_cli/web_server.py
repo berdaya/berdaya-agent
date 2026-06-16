@@ -8047,6 +8047,7 @@ class ProfileCreate(BaseModel):
     clone_all: bool = False
     no_skills: bool = False
     description: Optional[str] = None
+    workspace_dir: Optional[str] = None
     # Explicit source profile to clone from (e.g. duplicating an existing
     # profile). When set, it takes precedence over ``clone_from_default``,
     # which always sources from "default". ``clone_all`` still selects a full
@@ -8115,6 +8116,7 @@ def _profile_to_dict(info) -> Dict[str, Any]:
         "gateway_running": bool(_profile_attr(info, "gateway_running", False)),
         "description": _profile_attr(info, "description", "") or "",
         "description_auto": bool(_profile_attr(info, "description_auto", False)),
+        "workspace_dir": _profile_attr(info, "workspace_dir", "") or "",
         "distribution_name": _profile_attr(info, "distribution_name"),
         "distribution_version": _profile_attr(info, "distribution_version"),
         "distribution_source": _profile_attr(info, "distribution_source"),
@@ -8144,6 +8146,7 @@ def _fallback_profile_dicts(profiles_mod) -> List[Dict[str, Any]]:
             "gateway_running": _safe(lambda: profiles_mod._check_gateway_running(default_home), False),
             "description": _safe(lambda: profiles_mod.read_profile_meta(default_home).get("description", ""), ""),
             "description_auto": _safe(lambda: profiles_mod.read_profile_meta(default_home).get("description_auto", False), False),
+            "workspace_dir": _safe(lambda: profiles_mod.resolve_profile_workspace_dir(default_home), ""),
             "distribution_name": None,
             "distribution_version": None,
             "distribution_source": None,
@@ -8167,6 +8170,7 @@ def _fallback_profile_dicts(profiles_mod) -> List[Dict[str, Any]]:
                 "gateway_running": _safe(lambda entry=entry: profiles_mod._check_gateway_running(entry), False),
                 "description": _safe(lambda entry=entry: profiles_mod.read_profile_meta(entry).get("description", ""), ""),
                 "description_auto": _safe(lambda entry=entry: profiles_mod.read_profile_meta(entry).get("description_auto", False), False),
+                "workspace_dir": _safe(lambda entry=entry: profiles_mod.resolve_profile_workspace_dir(entry), ""),
                 "distribution_name": None,
                 "distribution_version": None,
                 "distribution_source": None,
@@ -8335,6 +8339,7 @@ async def create_profile_endpoint(body: ProfileCreate):
             clone_config=clone_config,
             no_skills=body.no_skills,
             description=body.description,
+            workspace_dir=body.workspace_dir,
         )
         # Match the CLI's profile-create flow: fresh named profiles get the
         # bundled skills installed. When cloning from default, create_profile()

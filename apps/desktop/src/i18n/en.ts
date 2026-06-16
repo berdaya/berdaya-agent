@@ -922,7 +922,15 @@ export const en: Translations = {
     failedLoadProject: 'Failed to load PROJECT.md',
     failedSaveProject: 'Failed to save PROJECT.md',
     failedCreate: 'Failed to create project',
-    failedRename: 'Failed to rename project'
+    failedRename: 'Failed to rename project',
+    workspaceLabel: 'Workspace folder',
+    workspaceHint: 'Terminal commands and file tools run in this folder.',
+    workspaceRequired: 'Choose a workspace folder for this project.',
+    chooseWorkspace: 'Choose folder…',
+    workspacePlaceholder: 'No folder selected',
+    firstProjectTitle: 'Create your first project',
+    firstProjectDesc:
+      'Projects keep chats, settings, and files isolated. Choose a workspace folder where this project will work.'
   },
 
   cron: {

@@ -23,7 +23,7 @@ import {
   touchSecondaryGateways
 } from '@/store/gateway'
 import { notify, notifyError } from '@/store/notifications'
-import { $activeGatewayProfile, normalizeProfileKey, touchActiveGatewayBackend } from '@/store/profile'
+import { $activeGatewayProfile, applyProfileWorkspace, normalizeProfileKey, refreshActiveProfile, touchActiveGatewayBackend } from '@/store/profile'
 import {
   $attentionSessionIds,
   $connection,
@@ -343,6 +343,8 @@ export function useGatewayBoot({
           $activeGatewayProfile.set(profileKey)
           setPrimaryGateway(gateway, profileKey)
           void ensureGatewayForProfile(profileKey)
+          await refreshActiveProfile()
+          await applyProfileWorkspace(profileKey)
         } catch {
           $activeGatewayProfile.set('default')
         }

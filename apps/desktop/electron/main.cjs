@@ -2026,7 +2026,157 @@ function isPackagedInstallPath(dir) {
   })
 }
 
-function resolveHermesCwd() {
+function resolveProfileHomeDir(profileName) {
+  const key = typeof profileName === 'string' ? profileName.trim() : ''
+
+  if (!key || key === 'default') {
+    return HERMES_HOME
+  }
+
+  if (!PROFILE_NAME_RE.test(key)) {
+    return null
+  }
+
+  return path.join(HERMES_HOME, 'profiles', key)
+}
+
+function readYamlScalar(filePath, key) {
+  try {
+    if (!fileExists(filePath)) {
+      return null
+    }
+
+    const lines = fs.readFileSync(filePath, 'utf8').split(/\r?\n/)
+
+    for (const line of lines) {
+      const trimmed = line.trim()
+
+      if (!trimmed || trimmed.startsWith('#')) {
+        continue
+      }
+
+      const match = trimmed.match(new RegExp(`^${key}:\\s*(.+)$`))
+
+      if (!match) {
+        continue
+      }
+
+      let value = match[1].trim()
+
+      if (
+        (value.startsWith('"') && value.endsWith('"'))
+        || (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1)
+      }
+
+      return value.trim() || null
+    }
+  } catch {
+    // Fall through.
+  }
+
+  return null
+}
+
+function readTerminalCwdFromConfig(configPath) {
+  try {
+    if (!fileExists(configPath)) {
+      return null
+    }
+
+    const lines = fs.readFileSync(configPath, 'utf8').split(/\r?\n/)
+    let inTerminal = false
+
+    for (const line of lines) {
+      const trimmed = line.trim()
+
+      if (/^terminal:\s*$/.test(trimmed)) {
+        inTerminal = true
+        continue
+      }
+
+      if (inTerminal && trimmed && !/^\s/.test(line) && !trimmed.startsWith('#')) {
+        inTerminal = false
+      }
+
+      if (!inTerminal) {
+        continue
+      }
+
+      const cwdMatch = trimmed.match(/^cwd:\s*(.+)$/)
+
+      if (!cwdMatch) {
+        continue
+      }
+
+      let value = cwdMatch[1].trim()
+
+      if (
+        (value.startsWith('"') && value.endsWith('"'))
+        || (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1)
+      }
+
+      if (!value || value === '.' || value === 'auto' || value === 'cwd') {
+        return null
+      }
+
+      return expandUserPath(value)
+    }
+  } catch {
+    // Fall through.
+  }
+
+  return null
+}
+
+function readProfileWorkspaceDir(profileName) {
+  const profileDir = resolveProfileHomeDir(profileName)
+
+  if (!profileDir || !directoryExists(profileDir)) {
+    return null
+  }
+
+  const fromMeta = readYamlScalar(path.join(profileDir, 'profile.yaml'), 'workspace_dir')
+
+  if (fromMeta) {
+    try {
+      const resolved = path.resolve(expandUserPath(fromMeta))
+
+      if (directoryExists(resolved) && !isPackagedInstallPath(resolved)) {
+        return resolved
+      }
+    } catch {
+      // Fall through to config.yaml.
+    }
+  }
+
+  const fromConfig = readTerminalCwdFromConfig(path.join(profileDir, 'config.yaml'))
+
+  if (fromConfig) {
+    try {
+      const resolved = path.resolve(fromConfig)
+
+      if (directoryExists(resolved) && !isPackagedInstallPath(resolved)) {
+        return resolved
+      }
+    } catch {
+      // Fall through to the global chain.
+    }
+  }
+
+  return null
+}
+
+function resolveHermesCwd(profileName) {
+  const profileWorkspace = profileName ? readProfileWorkspaceDir(profileName) : null
+
+  if (profileWorkspace) {
+    return profileWorkspace
+  }
+
   // In a packaged build, `process.cwd()` resolves to the install root (e.g.
   // `…/win-unpacked` on Windows or `/Applications/Berdaya Agent.app/Contents/...`
   // on macOS). Sessions spawned there leave files inside the app bundle
@@ -2059,9 +2209,10 @@ function resolveHermesCwd() {
 
 function sanitizeWorkspaceCwd(cwd) {
   const trimmed = typeof cwd === 'string' ? cwd.trim() : ''
+  const profileKey = readActiveDesktopProfile() || 'default'
 
   if (!trimmed || isPackagedInstallPath(trimmed)) {
-    return { cwd: resolveHermesCwd(), sanitized: Boolean(trimmed) }
+    return { cwd: resolveHermesCwd(profileKey), sanitized: Boolean(trimmed) }
   }
 
   try {
@@ -2074,7 +2225,7 @@ function sanitizeWorkspaceCwd(cwd) {
     // Fall through to the resolved default.
   }
 
-  return { cwd: resolveHermesCwd(), sanitized: Boolean(trimmed) }
+  return { cwd: resolveHermesCwd(profileKey), sanitized: Boolean(trimmed) }
 }
 
 // Persisted "Default project directory" — surfaced as a setting in the
@@ -2968,7 +3119,9 @@ function expandUserPath(filePath) {
 
 async function previewFileTarget(rawTarget, baseDir) {
   const raw = String(rawTarget || '').trim()
-  const base = baseDir ? path.resolve(expandUserPath(baseDir)) : resolveHermesCwd()
+  const base = baseDir
+    ? path.resolve(expandUserPath(baseDir))
+    : resolveHermesCwd(readActiveDesktopProfile() || 'default')
   let resolved = resolveRequestedPathForIpc(/^file:/i.test(raw) ? raw : expandUserPath(raw), {
     baseDir: base,
     purpose: 'Preview target'
@@ -4544,7 +4697,7 @@ async function spawnPoolBackend(profile, entry) {
   // step 3 in hermes_cli/main.py), so the child re-homes to this profile.
   const dashboardArgs = ['--profile', profile, 'dashboard', '--no-open', '--host', '127.0.0.1', '--port', String(port)]
   const backend = await ensureRuntime(resolveHermesBackend(dashboardArgs))
-  const hermesCwd = resolveHermesCwd()
+  const hermesCwd = resolveHermesCwd(profile)
   const webDist = resolveWebDist()
 
   rememberLog(`Starting Berdaya Agent backend for profile "${profile}" via ${backend.label}`)
@@ -4744,7 +4897,7 @@ async function startHermes() {
     }
     await advanceBootProgress('backend.runtime', 'Resolving Berdaya Agent runtime', 28)
     const backend = await ensureRuntime(resolveHermesBackend(dashboardArgs))
-    const hermesCwd = resolveHermesCwd()
+    const hermesCwd = resolveHermesCwd(activeProfile || 'default')
     const webDist = resolveWebDist()
 
     await advanceBootProgress('backend.spawn', `Starting Berdaya Agent backend via ${backend.label}`, 84)
@@ -5543,7 +5696,7 @@ ipcMain.handle('hermes:openExternal', (_event, url) => {
 ipcMain.handle('hermes:setting:defaultProjectDir:get', async () => ({
   dir: readDefaultProjectDir(),
   defaultLabel: app.getPath('home'),
-  resolvedCwd: resolveHermesCwd()
+  resolvedCwd: resolveHermesCwd(readActiveDesktopProfile() || 'default')
 }))
 
 ipcMain.handle('hermes:workspace:sanitize', async (_event, cwd) => sanitizeWorkspaceCwd(cwd))
@@ -5569,6 +5722,27 @@ ipcMain.handle('hermes:setting:defaultProjectDir:pick', async () => {
     title: 'Choose default project directory',
     properties: ['openDirectory', 'createDirectory'],
     defaultPath: readDefaultProjectDir() || app.getPath('home')
+  })
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return { canceled: true, dir: null }
+  }
+
+  return { canceled: false, dir: result.filePaths[0] }
+})
+
+ipcMain.handle('hermes:project:workspace:pick', async (_event, suggestedName) => {
+  const home = app.getPath('home')
+  const documents = app.getPath('documents')
+  const suggested = typeof suggestedName === 'string' && suggestedName.trim()
+    ? suggestedName.trim().replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-+|-+$/g, '')
+    : 'my-project'
+  const defaultPath = path.join(documents, 'Projects', suggested || 'my-project')
+
+  const result = await dialog.showOpenDialog({
+    title: 'Choose project workspace folder',
+    properties: ['openDirectory', 'createDirectory'],
+    defaultPath
   })
 
   if (result.canceled || result.filePaths.length === 0) {
