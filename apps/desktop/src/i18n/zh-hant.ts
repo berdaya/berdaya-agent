@@ -1448,7 +1448,7 @@ export const zhHant = defineLocale({
 
   onboarding: {
     headerTitle: '開始設定 Berdaya Agent',
-    headerDesc: '連線模型提供方即可開始聊天。大多數選項只需一次點擊。',
+    headerDesc: '選擇 Berdaya Cloud 或 Berdaya Local，然後貼上 API 金鑰即可開始聊天。',
     preparingInstall: 'Berdaya Agent 正在完成安裝。首次執行通常不到一分鐘。',
     starting: '正在啟動 Berdaya Agent…',
     lookingUpProviders: '正在查詢提供方...',
@@ -1461,6 +1461,14 @@ export const zhHant = defineLocale({
     featuredPitch: '一個訂閱，300+ 前沿模型 — 執行 Berdaya Agent 的建議方式',
     openRouterPitch: '一個金鑰，數百個模型 — 穩定的預設選擇',
     apiKeyOptions: {
+      'berdaya-cloud': {
+        short: '雲端託管',
+        description: '透過 api.berdaya.ai 使用正式模型 — 貼上 Berdaya API 金鑰。'
+      },
+      'berdaya-local': {
+        short: '本機開發伺服器',
+        description: '連線本機 Berdaya API 伺服器 (127.0.0.1:8000)。'
+      },
       openrouter: { short: '一個金鑰，多個模型', description: '用一個金鑰存取數百個模型。適合新安裝的預設選擇。' },
       openai: { short: 'GPT 等級模型', description: '直接存取 OpenAI 模型。' },
       gemini: { short: 'Gemini 模型', description: '直接存取 Google Gemini 模型。' },

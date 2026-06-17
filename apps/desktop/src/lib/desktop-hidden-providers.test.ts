@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  BERDAYA_ONBOARDING_API_KEY_OPTIONS,
   filterDesktopModelOptions,
   filterDesktopModelProviders,
   filterDesktopOAuthProviders
@@ -49,5 +50,13 @@ describe('desktop-hidden-providers', () => {
       model: 'berdaya/1.0',
       providers: [{ slug: 'berdaya-local', name: 'Berdaya Local', models: ['berdaya/1.0'] }]
     })
+  })
+
+  it('ships static Berdaya Cloud and Local onboarding entries', () => {
+    expect(BERDAYA_ONBOARDING_API_KEY_OPTIONS.map(option => option.id)).toEqual([
+      'berdaya-cloud',
+      'berdaya-local'
+    ])
+    expect(BERDAYA_ONBOARDING_API_KEY_OPTIONS.every(option => option.envKey === 'BERDAYA_API_KEY')).toBe(true)
   })
 })

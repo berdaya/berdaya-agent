@@ -145,7 +145,7 @@ function writeCachedSkipped(value: boolean) {
 const INITIAL: DesktopOnboardingState = {
   configured: readCachedConfigured(),
   flow: { status: 'idle' },
-  mode: 'oauth',
+  mode: 'apikey',
   providers: null,
   reason: null,
   requested: false,
@@ -443,7 +443,7 @@ export function completeDesktopOnboarding() {
   $desktopOnboarding.set({
     configured: true,
     flow: { status: 'idle' },
-    mode: 'oauth',
+    mode: 'apikey',
     providers: null,
     reason: null,
     requested: false,
@@ -701,7 +701,13 @@ export async function recheckExternalSignin(ctx: OnboardingContext) {
   )
 }
 
-export async function saveOnboardingApiKey(envKey: string, value: string, label: string, ctx: OnboardingContext) {
+export async function saveOnboardingApiKey(
+  envKey: string,
+  value: string,
+  label: string,
+  ctx: OnboardingContext,
+  providerSlug?: string
+) {
   const trimmed = value.trim()
 
   if (!trimmed) {
@@ -722,13 +728,9 @@ export async function saveOnboardingApiKey(envKey: string, value: string, label:
   // let the user proceed; an actually-bad key surfaces later at chat time.
   try {
     await setEnvVar(envKey, trimmed)
-    // For API-key flows we don't have a definitive provider id (the
-    // user picked which API key they're entering, but the corresponding
-    // backend slug — e.g. OPENROUTER_API_KEY → "openrouter" — is the
-    // env-key prefix stripped). Pass a couple of likely candidates;
-    // fetchProviderDefaultModel falls back to the first authenticated
-    // provider returned by /api/model/options if none match.
-    const slugCandidates = [envKey.replace(/_API_KEY$/, '').toLowerCase(), label.toLowerCase()]
+    const slugCandidates = providerSlug
+      ? [providerSlug]
+      : [envKey.replace(/_API_KEY$/, '').toLowerCase(), label.toLowerCase()]
     // ignoreRuntimeGate=true: never block onboarding on the runtime check.
     await completeWithModelConfirm(ctx, label, slugCandidates, () => undefined, true)
 

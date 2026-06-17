@@ -20,7 +20,7 @@ import {
   Loader2,
   Terminal
 } from '@/lib/icons'
-import { filterDesktopOAuthProviders } from '@/lib/desktop-hidden-providers'
+import { filterDesktopOAuthProviders, BERDAYA_ONBOARDING_API_KEY_OPTIONS } from '@/lib/desktop-hidden-providers'
 import { isProviderSetupErrorMessage } from '@/lib/provider-setup-errors'
 import { cn } from '@/lib/utils'
 import { $desktopBoot, type DesktopBootState } from '@/store/boot'
@@ -65,56 +65,17 @@ export interface ApiKeyOption {
   short?: string
 }
 
-const API_KEY_OPTIONS: ApiKeyOption[] = [
-  {
-    id: 'openrouter',
-    name: 'OpenRouter',
-    envKey: 'OPENROUTER_API_KEY',
-    docsUrl: 'https://openrouter.ai/keys'
-  },
-  {
-    id: 'openai',
-    name: 'OpenAI',
-    envKey: 'OPENAI_API_KEY',
-    docsUrl: 'https://platform.openai.com/api-keys'
-  },
-  {
-    id: 'gemini',
-    name: 'Google Gemini',
-    envKey: 'GEMINI_API_KEY',
-    docsUrl: 'https://aistudio.google.com/app/apikey'
-  },
-  {
-    id: 'xai',
-    name: 'xAI Grok',
-    envKey: 'XAI_API_KEY',
-    docsUrl: 'https://console.x.ai/'
-  },
-  {
-    id: 'local',
-    name: 'Local / custom endpoint',
-    envKey: 'OPENAI_BASE_URL',
-    docsUrl: 'https://github.com/berdaya/berdaya-agent#bring-your-own-endpoint',
-    placeholder: 'http://127.0.0.1:8000/v1'
-  }
-]
+const API_KEY_OPTIONS: ApiKeyOption[] = [...BERDAYA_ONBOARDING_API_KEY_OPTIONS]
 
-// Build the FULL API-key provider catalog from the backend model options so the
-// onboarding / Providers key form lists every `api_key` provider `hermes model`
-// knows about — not just the hand-curated five. Curated entries keep their
-// richer copy + placeholders and float to the top (recommended defaults); every
-// other api_key provider is appended with a generic "paste {KEY}" affordance.
-// OAuth / external providers are intentionally excluded here — they go through
-// the OAuth picker / sign-in flow, not a pasted key.
-function useApiKeyCatalog(): ApiKeyOption[] {
+// Berdaya desktop onboarding only offers Cloud vs Local. Names come from the
+// backend catalog when available; the static list guarantees both choices show
+// up immediately after first install.
+function useBerdayaApiKeyOptions(): ApiKeyOption[] {
   const [rows, setRows] = useState<ModelOptionProvider[]>([])
 
   useEffect(() => {
     let cancelled = false
 
-    // Best-effort — on failure the curated defaults still render. Wrapped in
-    // Promise.resolve().then so a synchronous throw (e.g. no desktop bridge in
-    // tests) is funneled into the same .catch instead of escaping.
     void Promise.resolve()
       .then(() => getGlobalModelOptions())
       .then(res => {
@@ -123,7 +84,7 @@ function useApiKeyCatalog(): ApiKeyOption[] {
         }
       })
       .catch(() => {
-        // Ignore — fall back to the curated API_KEY_OPTIONS only.
+        // Ignore — fall back to the static Berdaya list.
       })
 
     return () => {
@@ -132,38 +93,17 @@ function useApiKeyCatalog(): ApiKeyOption[] {
   }, [])
 
   return useMemo(() => {
-    const curatedByEnv = new Map(API_KEY_OPTIONS.map(o => [o.envKey, o]))
-    const derived: ApiKeyOption[] = []
-    const seenEnv = new Set<string>(API_KEY_OPTIONS.map(o => o.envKey))
+    const bySlug = new Map(rows.map(row => [row.slug, row]))
 
-    for (const row of rows) {
-      // Only api_key providers can be activated with a pasted key. Skip OAuth /
-      // external / managed flows and anything missing an env var to write to.
-      if (row.auth_type && row.auth_type !== 'api_key') {
-        continue
+    return BERDAYA_ONBOARDING_API_KEY_OPTIONS.map(option => {
+      const row = bySlug.get(option.id)
+
+      return {
+        ...option,
+        name: row?.name ?? option.name,
+        description: (row as { description?: string } | undefined)?.description ?? option.description
       }
-
-      const envKey = row.key_env
-
-      if (!envKey || seenEnv.has(envKey)) {
-        continue
-      }
-
-      seenEnv.add(envKey)
-      derived.push({
-        id: row.slug,
-        name: row.name,
-        envKey,
-        description: `Direct API access to ${row.name}.`,
-        docsUrl: ''
-      })
-    }
-
-    // Curated first (recommended order), then the rest alphabetically so the
-    // long tail is scannable.
-    derived.sort((a, b) => a.name.localeCompare(b.name))
-
-    return [...API_KEY_OPTIONS.filter(o => curatedByEnv.has(o.envKey)), ...derived]
+    })
   }, [rows])
 }
 
@@ -431,83 +371,24 @@ const persistShowAll = (value: boolean) => {
 }
 
 export function Picker({ ctx }: { ctx: OnboardingContext }) {
-  const { t } = useI18n()
-  const { manual, mode, providers } = useStore($desktopOnboarding)
-  const [showAll, setShowAll] = useState(readShowAll)
-  const ordered = useMemo(() => (providers ? sortProviders(providers) : []), [providers])
-  const hasOauth = ordered.length > 0
-  const apiKeyOptions = useApiKeyCatalog()
-
-  if (mode === 'apikey' || !hasOauth) {
-    return (
-      <div className="grid gap-3">
-        <ApiKeyForm
-          canGoBack={hasOauth}
-          onBack={() => setOnboardingMode('oauth')}
-          onSave={(envKey, value, name) => saveOnboardingApiKey(envKey, value, name, ctx)}
-          options={apiKeyOptions}
-        />
-        {manual ? null : (
-          <div className="flex justify-center border-t border-(--ui-stroke-tertiary) pt-3">
-            <ChooseLaterLink />
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  if (providers === null) {
-    return <Status>{t.onboarding.lookingUpProviders}</Status>
-  }
-
-  const select = (p: OAuthProvider) => void startProviderOAuth(p, ctx)
-  const featured = ordered.find(p => p.id === FEATURED_ID) ?? null
-  const rest = featured ? ordered.filter(p => p.id !== FEATURED_ID) : ordered
-  // Collapse the secondary providers behind a disclosure only when a featured
-  // provider is present to anchor the choice — otherwise show the full list.
-  const collapsible = Boolean(featured) && rest.length > 0
-  const showRest = !collapsible || showAll
+  const { manual } = useStore($desktopOnboarding)
+  const berdayaOptions = useBerdayaApiKeyOptions()
 
   return (
-    <div className="grid gap-2">
-      <div className="grid max-h-[60dvh] gap-2 overflow-y-auto p-1">
-        {featured ? <FeaturedProviderRow onSelect={select} provider={featured} /> : null}
-        {showRest ? (
-          <>
-            {rest.map(p => (
-              <ProviderRow key={p.id} onSelect={select} provider={p} />
-            ))}
-            <KeyProviderRow onClick={() => setOnboardingMode('apikey')} />
-          </>
-        ) : null}
-      </div>
-      {collapsible ? (
-        <Button
-          className="mt-1 self-center font-medium"
-          onClick={() => setShowAll(persistShowAll(!showAll))}
-          size="xs"
-          type="button"
-          variant="text"
-        >
-          {showAll ? t.onboarding.collapse : t.onboarding.otherProviders}
-          <ChevronDown className={cn('size-3.5 transition', showAll && 'rotate-180')} />
-        </Button>
-      ) : null}
-      <div className="flex items-center justify-between gap-3 pt-1">
-        {/* First run only: let the user defer the choice and land in the app.
-            In manual mode the overlay already has a close affordance, so the
-            "choose later" escape would be redundant — hide it. */}
-        {manual ? <span /> : <ChooseLaterLink />}
-        <Button
-          className="-mr-2 font-medium"
-          onClick={() => setOnboardingMode('apikey')}
-          size="xs"
-          type="button"
-          variant="text"
-        >
-          {t.onboarding.haveApiKey}
-        </Button>
-      </div>
+    <div className="grid gap-3">
+      <ApiKeyForm
+        canGoBack={false}
+        onBack={() => undefined}
+        onSave={(envKey, value, name, providerId) =>
+          saveOnboardingApiKey(envKey, value, name, ctx, providerId)
+        }
+        options={berdayaOptions}
+      />
+      {manual ? null : (
+        <div className="flex justify-center border-t border-(--ui-stroke-tertiary) pt-3">
+          <ChooseLaterLink />
+        </div>
+      )}
     </div>
   )
 }
@@ -643,7 +524,12 @@ export function ApiKeyForm({
   isSet?: (envKey: string) => boolean
   onBack: () => void
   onClear?: (envKey: string) => void
-  onSave: (envKey: string, value: string, name: string) => Promise<{ message?: string; ok: boolean }>
+  onSave: (
+    envKey: string,
+    value: string,
+    name: string,
+    providerId?: string
+  ) => Promise<{ message?: string; ok: boolean }>
   options?: ApiKeyOption[]
   redactedValue?: (envKey: string) => null | string | undefined
 }) {
@@ -656,12 +542,12 @@ export function ApiKeyForm({
   // Providers page wiring its search into this grid). Keep the selection valid
   // by snapping back to the first remaining option when the current one drops.
   useEffect(() => {
-    if (options.length > 0 && !options.some(o => o.envKey === option.envKey)) {
+    if (options.length > 0 && !options.some(o => o.id === option.id)) {
       setOption(options[0])
       setValue('')
       setError(null)
     }
-  }, [option.envKey, options])
+  }, [option.id, options])
   // The catalog grid can be tall, leaving the entry field far below the fold.
   // On selection we scroll the field into view and focus it so it's always
   // obvious where to paste next.
@@ -695,7 +581,7 @@ export function ApiKeyForm({
 
     setSaving(true)
     setError(null)
-    const result = await onSave(option.envKey, value, option.name)
+    const result = await onSave(option.envKey, value, option.name, option.id)
 
     if (result.ok) {
       setValue('')
@@ -726,9 +612,9 @@ export function ApiKeyForm({
           <button
             className={cn(
               'rounded-2xl border bg-background/60 p-3 text-left transition hover:bg-accent/50',
-              option.envKey === o.envKey ? 'border-primary ring-2 ring-primary/20' : 'border-transparent'
+              option.id === o.id ? 'border-primary ring-2 ring-primary/20' : 'border-transparent'
             )}
-            key={o.envKey}
+            key={o.id}
             onClick={() => pick(o)}
             type="button"
           >

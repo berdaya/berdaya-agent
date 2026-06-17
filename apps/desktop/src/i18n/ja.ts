@@ -1484,7 +1484,7 @@ export const ja = defineLocale({
 
   onboarding: {
     headerTitle: 'Berdaya Agent のセットアップをしましょう',
-    headerDesc: 'チャットを始めるにはモデルプロバイダーを接続してください。ほとんどのオプションはワンクリックです。',
+    headerDesc: 'Berdaya Cloud または Berdaya Local を選び、API キーを貼り付けてチャットを始めましょう。',
     preparingInstall: 'Berdaya Agent はインストールを完了中です。初回実行では通常 1 分以内に完了します。',
     starting: 'Berdaya Agent を起動中…',
     lookingUpProviders: 'プロバイダーを検索中...',
@@ -1497,6 +1497,14 @@ export const ja = defineLocale({
     featuredPitch: '1 つのサブスクリプションで 300 以上の最先端モデル — Berdaya Agent を実行するための推奨方法',
     openRouterPitch: '1 つのキーで数百のモデル — 堅実なデフォルト',
     apiKeyOptions: {
+      'berdaya-cloud': {
+        short: 'クラウド',
+        description: 'api.berdaya.ai 経由の本番モデル — Berdaya API キーを貼り付け。'
+      },
+      'berdaya-local': {
+        short: 'ローカル開発サーバー',
+        description: 'このマシン上の Berdaya API サーバー (127.0.0.1:8000) に接続。'
+      },
       openrouter: {
         short: '1 つのキーで多くのモデル',
         description: '1 つのキーで数百のモデルをホスト。新規インストールのデフォルトとして最適。'

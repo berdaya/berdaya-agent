@@ -1352,7 +1352,7 @@ export const en: Translations = {
 
   onboarding: {
     headerTitle: "Let's get you setup with Berdaya Agent",
-    headerDesc: 'Connect a model provider to start chatting. Most options take one click.',
+    headerDesc: 'Choose Berdaya Cloud or Berdaya Local, then paste your API key to start chatting.',
     preparingInstall: 'Berdaya Agent is finishing install. This usually takes under a minute on first run.',
     starting: 'Starting Berdaya Agent…',
     lookingUpProviders: 'Looking up providers...',
@@ -1365,6 +1365,14 @@ export const en: Translations = {
     featuredPitch: 'One subscription, 300+ frontier models — the recommended way to run Berdaya Agent',
     openRouterPitch: 'One key, hundreds of models — a solid default',
     apiKeyOptions: {
+      'berdaya-cloud': {
+        short: 'Managed cloud',
+        description: 'Production models via api.berdaya.ai — paste your Berdaya API key.'
+      },
+      'berdaya-local': {
+        short: 'Local dev server',
+        description: 'Connect to a Berdaya API server on this machine (127.0.0.1:8000).'
+      },
       openrouter: {
         short: 'one key, many models',
         description: 'Hosts hundreds of models behind a single key. Good default for new installs.'

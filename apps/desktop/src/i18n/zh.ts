@@ -1536,7 +1536,7 @@ export const zh: Translations = {
 
   onboarding: {
     headerTitle: '开始设置 Berdaya Agent',
-    headerDesc: '连接模型提供方即可开始对话。大多数选项只需一次点击。',
+    headerDesc: '选择 Berdaya Cloud 或 Berdaya Local，然后粘贴 API 密钥即可开始对话。',
     preparingInstall: 'Berdaya Agent 正在完成安装。首次运行通常不到一分钟。',
     starting: '正在启动 Berdaya Agent…',
     lookingUpProviders: '正在查找提供方...',
@@ -1549,6 +1549,14 @@ export const zh: Translations = {
     featuredPitch: '一个订阅，300+ 前沿模型 — 运行 Berdaya Agent 的推荐方式',
     openRouterPitch: '一个密钥，数百个模型 — 稳妥的默认选择',
     apiKeyOptions: {
+      'berdaya-cloud': {
+        short: '云端托管',
+        description: '通过 api.berdaya.ai 使用生产模型 — 粘贴 Berdaya API 密钥。'
+      },
+      'berdaya-local': {
+        short: '本地开发服务器',
+        description: '连接本机 Berdaya API 服务器 (127.0.0.1:8000)。'
+      },
       openrouter: { short: '一个密钥，多个模型', description: '用一个密钥访问数百个模型。适合新安装的默认选择。' },
       openai: { short: 'GPT 级模型', description: '直接访问 OpenAI 模型。' },
       gemini: { short: 'Gemini 模型', description: '直接访问 Google Gemini 模型。' },

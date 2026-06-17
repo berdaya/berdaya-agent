@@ -210,7 +210,9 @@ export function ProvidersSettings({ onViewChange, view }: ProvidersSettingsProps
   // providers there's nothing for the "Accounts" view to show, so fall to keys.
   const showApiKeys = view === 'keys' || !hasOauth
 
-  const keyGroups = buildProviderKeyGroups(vars)
+  const keyGroups = buildProviderKeyGroups(vars).filter(
+    group => group.primary[0] === 'BERDAYA_API_KEY' || /berdaya/i.test(group.name)
+  )
 
   if (showApiKeys) {
     return (

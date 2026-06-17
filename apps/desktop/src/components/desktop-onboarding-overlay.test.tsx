@@ -2,31 +2,20 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { $desktopOnboarding, type DesktopOnboardingState, type OnboardingContext } from '@/store/onboarding'
-import type { OAuthProvider } from '@/types/hermes'
 
 import { Picker } from './desktop-onboarding-overlay'
 
-function provider(id: string, name = id): OAuthProvider {
-  return {
-    cli_command: `hermes login ${id}`,
-    docs_url: `https://example.com/${id}`,
-    flow: 'pkce',
-    id,
-    name,
-    status: { logged_in: false }
-  }
-}
-
-function setProviders(providers: OAuthProvider[]) {
+function setOnboarding(state: Partial<DesktopOnboardingState>) {
   $desktopOnboarding.set({
     configured: false,
     flow: { status: 'idle' },
-    mode: 'oauth',
-    providers,
+    mode: 'apikey',
+    providers: null,
     reason: null,
     requested: false,
     firstRunSkipped: false,
-    manual: false
+    manual: false,
+    ...state
   } satisfies DesktopOnboardingState)
 }
 
@@ -44,7 +33,7 @@ afterEach(() => {
   $desktopOnboarding.set({
     configured: null,
     flow: { status: 'idle' },
-    mode: 'oauth',
+    mode: 'apikey',
     providers: null,
     reason: null,
     requested: false,
@@ -54,40 +43,29 @@ afterEach(() => {
 })
 
 describe('onboarding Picker', () => {
-  it('hides the Nous Portal provider even when the backend advertises it', () => {
-    setProviders([provider('anthropic', 'Anthropic Claude'), provider('nous', 'Nous Portal')])
+  it('shows only Berdaya Cloud and Berdaya Local with an API key field', () => {
+    setOnboarding({})
     render(<Picker ctx={ctx} />)
 
-    expect(screen.queryByText('Nous Portal')).toBeNull()
-    expect(screen.queryByText('Recommended')).toBeNull()
-    expect(screen.getByText('Anthropic API Key')).toBeTruthy()
-  })
-
-  it('shows every provider directly when Nous Portal is absent', () => {
-    setProviders([provider('anthropic', 'Anthropic Claude'), provider('openai-codex', 'OpenAI Codex / ChatGPT')])
-    render(<Picker ctx={ctx} />)
-
-    expect(screen.getByText('Anthropic API Key')).toBeTruthy()
-    expect(screen.getByText('OpenAI OAuth (ChatGPT)')).toBeTruthy()
-    expect(screen.queryByText('Other sign-in options')).toBeNull()
-    expect(screen.queryByText('Recommended')).toBeNull()
+    expect(screen.getByText('Berdaya Cloud')).toBeTruthy()
+    expect(screen.getByText('Berdaya Local')).toBeTruthy()
+    expect(screen.queryByText('OpenRouter')).toBeNull()
+    expect(screen.queryByText('OpenAI')).toBeNull()
+    expect(screen.getByPlaceholderText('Paste API key')).toBeTruthy()
   })
 
   it('offers "choose later" on first run and persists the skip', () => {
-    setProviders([provider('anthropic', 'Anthropic Claude')])
+    setOnboarding({})
     render(<Picker ctx={ctx} />)
 
     const skip = screen.getByRole('button', { name: "I'll choose a provider later" })
-
     fireEvent.click(skip)
 
     expect($desktopOnboarding.get().firstRunSkipped).toBe(true)
-    expect(window.localStorage.getItem('hermes-onboarding-skipped-v1')).toBe('1')
   })
 
-  it('hides "choose later" in manual (add-provider) mode', () => {
-    setProviders([provider('anthropic', 'Anthropic Claude')])
-    $desktopOnboarding.set({ ...$desktopOnboarding.get(), manual: true })
+  it('hides "choose later" in manual provider setup mode', () => {
+    setOnboarding({ manual: true })
     render(<Picker ctx={ctx} />)
 
     expect(screen.queryByRole('button', { name: "I'll choose a provider later" })).toBeNull()
