@@ -323,21 +323,27 @@ def test_detect_concurrent_parent_walk_handles_stub_without_process(_winp, tmp_p
 
 
 def test_format_message_mentions_pids_and_remediation(tmp_path):
-    matches = [(1234, "hermes.exe"), (5678, "hermes.exe")]
+    matches = [(1234, "berdaya.exe"), (5678, "hermes.exe")]
     msg = cli_main._format_concurrent_instances_message(matches, tmp_path)
 
     assert "1234" in msg
     assert "5678" in msg
+    assert "berdaya.exe" in msg
     assert "hermes.exe" in msg
     assert "Berdaya Agent Desktop" in msg
     assert "--force" in msg
-    # Mentions the file that would have been overwritten
-    assert str(tmp_path / "hermes.exe") in msg
     # Self-service kill command targets the exact stale PIDs (issue #34795).
     assert "taskkill" in msg
     assert "/PID 1234" in msg
     assert "/PID 5678" in msg
     assert "/F" in msg
+
+
+def test_hermes_exe_shims_includes_berdaya_entry_point(tmp_path):
+    shims = cli_main._hermes_exe_shims(tmp_path)
+    names = {shim.name for shim in shims}
+    assert "berdaya.exe" in names
+    assert "hermes.exe" in names
 
 
 # ---------------------------------------------------------------------------

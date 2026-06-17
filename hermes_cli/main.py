@@ -5345,13 +5345,24 @@ def _find_stale_dashboard_pids(
 
     Returns an empty list on any scan error (missing ps/wmic, timeout, etc.).
     """
-    patterns = [
-        "hermes dashboard",
-        "hermes_cli.main dashboard",
-        "hermes_cli/main.py dashboard",
-    ]
     self_pid = os.getpid()
     dashboard_pids: list[int] = []
+
+    def _cmdline_looks_like_dashboard(cmd: str) -> bool:
+        lowered = cmd.lower()
+        if lowered.startswith("grep ") or " grep " in lowered:
+            return False
+        return any(
+            marker in lowered
+            for marker in (
+                "berdaya.exe dashboard",
+                "berdaya dashboard",
+                "hermes.exe dashboard",
+                "hermes dashboard",
+                "hermes_cli.main dashboard",
+                "hermes_cli/main.py dashboard",
+            )
+        )
 
     try:
         if sys.platform == "win32":
@@ -5380,7 +5391,7 @@ def _find_stale_dashboard_pids(
                 elif line.startswith("ProcessId="):
                     pid_str = line[len("ProcessId=") :]
                     if (
-                        any(p in current_cmd for p in patterns)
+                        _cmdline_looks_like_dashboard(current_cmd)
                         and int(pid_str) != self_pid
                     ):
                         try:
@@ -5413,7 +5424,7 @@ def _find_stale_dashboard_pids(
                     except ValueError:
                         continue
                     command = parts[1]
-                    if any(p in command for p in patterns) and pid != self_pid:
+                    if _cmdline_looks_like_dashboard(command) and pid != self_pid:
                         dashboard_pids.append(pid)
     except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
         return []
@@ -5674,6 +5685,22 @@ def _kill_stale_dashboard_processes(
 _warn_stale_dashboard_processes = _kill_stale_dashboard_processes
 
 
+def _prepare_for_dependency_update() -> None:
+    """Stop backends that hold venv CLI shims open before ``pip install -e .``.
+
+    On Windows, uv must replace ``berdaya.exe`` / ``hermes.exe`` during update.
+    A running Berdaya Agent Desktop backend (or stale dashboard) keeps those
+    files mapped and ``pip install`` fails with ``Access is denied (os error 5)``.
+    """
+    _kill_stale_dashboard_processes(
+        reason="they lock the Berdaya Agent CLI during dependency updates"
+    )
+    if _is_windows():
+        import time
+
+        time.sleep(0.25)
+
+
 def _update_via_zip(args):
     """Update Berdaya Agent by downloading a ZIP archive.
 
@@ -5784,6 +5811,7 @@ def _update_via_zip(args):
     # Reinstall Python dependencies. Prefer .[all], but if one optional extra
     # breaks on this machine, keep base deps and reinstall the remaining extras
     # individually so update does not silently strip working capabilities.
+    _prepare_for_dependency_update()
     print("→ Updating Python dependencies...")
 
     from hermes_cli.managed_uv import ensure_uv, update_managed_uv
@@ -6624,6 +6652,7 @@ def _hermes_exe_shims(scripts_dir: Path) -> list[Path]:
     if not _is_windows():
         return []
     return [
+        scripts_dir / "berdaya.exe",
         scripts_dir / "hermes.exe",
         scripts_dir / "hermes-gateway.exe",
     ]
@@ -6750,15 +6779,15 @@ def _format_concurrent_instances_message(
     matches: list[tuple[int, str]], scripts_dir: Path
 ) -> str:
     """Build a human-readable explanation + remediation hint for the user."""
-    shim = scripts_dir / "hermes.exe"
-    lines = ["✗ Another hermes.exe is running:"]
+    shim_names = ", ".join(shim.name for shim in _hermes_exe_shims(scripts_dir))
+    lines = [f"✗ Another Berdaya Agent CLI process is running ({shim_names}):"]
     for pid, name in matches:
         lines.append(f"    PID {pid}  {name}")
     lines.append("")
-    lines.append(f"  Updating now would fail to overwrite {shim} because")
+    lines.append("  Updating now would fail to overwrite the venv CLI shims because")
     lines.append("  Windows blocks REPLACE on a running executable.")
     lines.append("")
-    lines.append("  Close Berdaya Agent Desktop, exit any open `hermes` REPLs, and")
+    lines.append("  Close Berdaya Agent Desktop, exit any open `berdaya`/`hermes` REPLs, and")
     lines.append("  stop the gateway (`hermes gateway stop`) before retrying.")
     lines.append("")
     if matches:
@@ -8133,8 +8162,8 @@ def _cmd_update_impl(args, gateway_mode: bool):
     print("⚕ Updating Berdaya Agent...")
     print()
 
-    # On Windows, abort early if another hermes.exe is holding the venv shim
-    # open. Continuing would result in a string of WinError 32 warnings and
+    # On Windows, abort early if another berdaya/hermes CLI shim is holding the
+    # venv open. Continuing would result in a string of WinError 32 warnings and
     # then either a deferred-rename leftover or a failed git-pull fast path
     # that silently falls back to the slower ZIP route. See issue #26670.
     if _is_windows() and not getattr(args, "force", False):
@@ -8500,6 +8529,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # install via ``_recover_from_interrupted_install``. Cleared only after
         # the install + core-dependency verification completes below.
         _write_update_incomplete_marker()
+        _prepare_for_dependency_update()
         print("→ Updating Python dependencies...")
         from hermes_cli.managed_uv import ensure_uv, update_managed_uv
 

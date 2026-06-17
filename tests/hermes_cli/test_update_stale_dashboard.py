@@ -83,6 +83,11 @@ def _ps_runner(stdout: str):
 class TestFindStaleDashboardPids:
     """Unit tests for the ps/wmic-based detection step."""
 
+    pytestmark = pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="POSIX ps scan path; Windows wmic coverage is in TestWindowsWmicEncoding",
+    )
+
     def test_no_matches_returns_empty(self):
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
@@ -103,6 +108,20 @@ class TestFindStaleDashboardPids:
                 stderr="",
             )
             assert _find_stale_dashboard_pids() == [12345]
+
+    def test_matches_berdaya_dashboard_command(self):
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(
+                returncode=0,
+                stdout=_ps_line(
+                    54321,
+                    r"C:\Users\me\AppData\Local\berdaya\berdaya-agent\venv\Scripts\berdaya.EXE "
+                    "dashboard --open-profile yc --port 9120",
+                )
+                + "\n",
+                stderr="",
+            )
+            assert _find_stale_dashboard_pids() == [54321]
 
     def test_multiple_matches(self):
         with patch("subprocess.run") as mock_run:
@@ -434,3 +453,16 @@ class TestWindowsWmicEncoding:
             )
             # Must not raise.
             assert _find_stale_dashboard_pids() == []
+
+    def test_wmic_matches_berdaya_dashboard_command(self, monkeypatch):
+        monkeypatch.setattr(sys, "platform", "win32")
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(
+                returncode=0,
+                stdout=(
+                    "CommandLine=C:\\Users\\me\\berdaya.EXE dashboard --open-profile yc\n"
+                    "ProcessId=54321\n"
+                ),
+                stderr="",
+            )
+            assert _find_stale_dashboard_pids() == [54321]
