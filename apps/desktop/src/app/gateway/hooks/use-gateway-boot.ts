@@ -23,7 +23,7 @@ import {
   touchSecondaryGateways
 } from '@/store/gateway'
 import { notify, notifyError } from '@/store/notifications'
-import { $activeGatewayProfile, applyProfileWorkspace, listNamedProjects, normalizeProfileKey, refreshActiveProfile, switchProfile, touchActiveGatewayBackend } from '@/store/profile'
+import { $activeGatewayProfile, applyProfileWorkspace, listNamedProjects, normalizeProfileKey, refreshActiveProfile, setActiveProfile, switchProfile, touchActiveGatewayBackend } from '@/store/profile'
 import {
   $attentionSessionIds,
   $connection,
@@ -351,6 +351,22 @@ export function useGatewayBoot({
           if (!cancelled) {
             const { profiles } = await getProfiles()
             const named = listNamedProjects(profiles)
+
+            if (
+              storedProfile &&
+              storedProfile !== 'default' &&
+              !profiles.some(
+                row =>
+                  !row.is_default &&
+                  normalizeProfileKey(row.name) === normalizeProfileKey(storedProfile)
+              )
+            ) {
+              setActiveProfile('default')
+              $activeGatewayProfile.set('default')
+              await desktop.profile?.set?.('')
+
+              return
+            }
 
             if (named.length >= 1 && (!storedProfile || storedProfile === 'default')) {
               await switchProfile(named[0].name)

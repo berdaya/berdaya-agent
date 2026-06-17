@@ -2040,6 +2040,20 @@ function resolveProfileHomeDir(profileName) {
   return path.join(HERMES_HOME, 'profiles', key)
 }
 
+function profileExistsOnDisk(profileName) {
+  const key = typeof profileName === 'string' ? profileName.trim() : ''
+
+  if (!key || key === 'default') {
+    return true
+  }
+
+  if (!PROFILE_NAME_RE.test(key)) {
+    return false
+  }
+
+  return directoryExists(path.join(HERMES_HOME, 'profiles', key))
+}
+
 function readYamlScalar(filePath, key) {
   try {
     if (!fileExists(filePath)) {
@@ -4157,6 +4171,16 @@ function readActiveDesktopProfile() {
     const name = parsed && typeof parsed.profile === 'string' ? parsed.profile.trim() : ''
 
     if (name && (name === 'default' || PROFILE_NAME_RE.test(name))) {
+      if (name !== 'default' && !profileExistsOnDisk(name)) {
+        rememberLog(
+          `[profile] clearing stale active profile "${name}" — ` +
+            `missing from ${path.join(HERMES_HOME, 'profiles')}`
+        )
+        writeActiveDesktopProfile(null)
+
+        return null
+      }
+
       return name
     }
   } catch {
@@ -5578,6 +5602,40 @@ ipcMain.handle('hermes:api', async (_event, request) => {
     return await executeOnce()
   } catch (err) {
     const message = String(err?.message || err)
+    const profileMissing =
+      profileKey &&
+      profileKey !== 'default' &&
+      message.includes('404:') &&
+      /profile\s+['"]?[^'"]+['"]?\s+does not exist/i.test(message)
+    const staleActive = profileKey && profileKey === readActiveDesktopProfile()
+
+    if (profileMissing && staleActive) {
+      rememberLog(
+        `[api] clearing stale active profile "${profileKey}" — backend reports it missing`
+      )
+      writeActiveDesktopProfile(null)
+
+      if (request?.profile) {
+        const retryRequest = { ...request, profile: undefined }
+        const connection = await ensureBackend(undefined)
+        const url = `${connection.baseUrl}${retryRequest.path}`
+
+        if (connection.authMode === 'oauth') {
+          return fetchJsonViaOauthSession(url, {
+            method: retryRequest?.method,
+            body: retryRequest?.body,
+            timeoutMs
+          })
+        }
+
+        return fetchJson(url, connection.token, {
+          method: retryRequest?.method,
+          body: retryRequest?.body,
+          timeoutMs
+        })
+      }
+    }
+
     const refused = err?.code === 'ECONNREFUSED' || message.includes('ECONNREFUSED')
     const unauthorized = message.startsWith('401:')
     const retriable =
