@@ -269,12 +269,12 @@ const BOOTSTRAP_MARKER_SCHEMA_VERSION = 1
 
 const DESKTOP_CONNECTION_CONFIG_PATH = path.join(app.getPath('userData'), 'connection.json')
 const DESKTOP_UPDATE_CONFIG_PATH = path.join(app.getPath('userData'), 'updates.json')
-// active-profile.json records which Berdaya Agent profile the desktop launches its
-// local backend as. When set, startHermes() passes `hermes --profile <name>
-// dashboard …`, which deterministically pins HERMES_HOME (see
-// _apply_profile_override in hermes_cli/main.py) and bypasses the sticky
-// ~/.hermes/active_profile file. Unset (null) preserves the legacy behavior:
-// no --profile flag, so the backend honors active_profile / default.
+// active-profile.json records which Berdaya Agent profile the desktop preselects
+// on the machine dashboard. When set, startHermes() passes
+// `dashboard … --open-profile <name>` (machine HERMES_HOME + UI scoping).
+// Do NOT pass `--profile <name> dashboard` — that triggers cmd_dashboard's
+// profile→machine re-exec (os.execvpe), which crashes on Windows when spawned
+// via berdaya.EXE (exit 0xC0000005). Unset (null) preserves the legacy launch.
 const DESKTOP_PROFILE_CONFIG_PATH = path.join(app.getPath('userData'), 'active-profile.json')
 // Mirrors hermes_cli.profiles._PROFILE_ID_RE so we never hand the backend a
 // value its profile resolver would reject and exit on.
@@ -2288,6 +2288,19 @@ function createPythonBackend(root, label, dashboardArgs, options = {}) {
   }
 }
 
+// Build argv for spawning the machine-level dashboard backend. Named profiles
+// are scoped via --open-profile, not --profile (see active-profile.json note).
+function buildDashboardSpawnArgs(port, profileName) {
+  const args = ['dashboard', '--no-open', '--host', '127.0.0.1', '--port', String(port)]
+  const key = typeof profileName === 'string' ? profileName.trim() : ''
+
+  if (key && key !== 'default') {
+    args.push('--open-profile', key)
+  }
+
+  return args
+}
+
 // createActiveBackend — build a backend pointing at ACTIVE_HERMES_ROOT, the
 // canonical install location shared with the CLI installer. The venv at
 // VENV_ROOT may not exist yet on first run; bootstrap=true tells
@@ -4135,8 +4148,8 @@ function writeDesktopConnectionConfig(config) {
 }
 
 // Returns the desktop's chosen profile name, or null when unset. "default" is
-// a valid stored value (pins the root HERMES_HOME explicitly); null means "no
-// preference" and preserves the legacy launch (no --profile flag).
+// a valid stored value (machine HERMES_HOME with no --open-profile). null means
+// no preference — launch the machine dashboard without a preselected profile.
 function readActiveDesktopProfile() {
   try {
     const raw = fs.readFileSync(DESKTOP_PROFILE_CONFIG_PATH, 'utf8')
@@ -4693,9 +4706,7 @@ async function spawnPoolBackend(profile, entry) {
 
   const port = await pickPort()
   const token = crypto.randomBytes(32).toString('base64url')
-  // --profile wins over the inherited HERMES_HOME env (see _apply_profile_override
-  // step 3 in hermes_cli/main.py), so the child re-homes to this profile.
-  const dashboardArgs = ['--profile', profile, 'dashboard', '--no-open', '--host', '127.0.0.1', '--port', String(port)]
+  const dashboardArgs = buildDashboardSpawnArgs(port, profile)
   const backend = await ensureRuntime(resolveHermesBackend(dashboardArgs))
   const hermesCwd = resolveHermesCwd(profile)
   const webDist = resolveWebDist()
@@ -4885,16 +4896,8 @@ async function startHermes() {
     await advanceBootProgress('backend.port', 'Finding an open local port', 16)
     const port = await pickPort()
     const token = crypto.randomBytes(32).toString('base64url')
-    const dashboardArgs = ['dashboard', '--no-open', '--host', '127.0.0.1', '--port', String(port)]
-    // Pin the desktop's chosen profile via the global --profile flag. This is
-    // deterministic (it wins over the sticky ~/.hermes/active_profile file) and
-    // resolves HERMES_HOME the same way `hermes -p <name>` does on the CLI. An
-    // unset preference keeps the legacy launch so existing installs are
-    // unaffected.
     const activeProfile = readActiveDesktopProfile()
-    if (activeProfile) {
-      dashboardArgs.unshift('--profile', activeProfile)
-    }
+    const dashboardArgs = buildDashboardSpawnArgs(port, activeProfile || 'default')
     await advanceBootProgress('backend.runtime', 'Resolving Berdaya Agent runtime', 28)
     const backend = await ensureRuntime(resolveHermesBackend(dashboardArgs))
     const hermesCwd = resolveHermesCwd(activeProfile || 'default')

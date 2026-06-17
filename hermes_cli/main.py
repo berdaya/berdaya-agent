@@ -10237,6 +10237,21 @@ def _dashboard_listening(host: str, port: int) -> bool:
         return False
 
 
+def _dashboard_reexec(argv, env):
+    """Hand off to the machine-dashboard child (profile→machine routing).
+
+    ``os.execvpe`` is used on POSIX. On Windows, exec-family calls from a
+    setuptools console-script launcher (``berdaya.exe``) can fault with
+    ``STATUS_ACCESS_VIOLATION`` (0xC0000005); ``subprocess.run`` is safe.
+    """
+    if sys.platform == "win32":
+        import subprocess
+
+        completed = subprocess.run(argv, env=env)
+        sys.exit(completed.returncode)
+    os.execvpe(argv[0], argv, env)
+
+
 def cmd_dashboard(args):
     """Start the web UI server, or (with --stop/--status) manage running ones."""
     # --status: report running dashboards and exit, no deps needed.
@@ -10314,7 +10329,7 @@ def cmd_dashboard(args):
         env = os.environ.copy()
         # Drop the profile HERMES_HOME so the child binds the machine root.
         env.pop("HERMES_HOME", None)
-        os.execvpe(sys.executable, reexec_argv, env)
+        _dashboard_reexec(reexec_argv, env)
 
     # Attach gui.log early so dashboard startup/build failures are captured in
     # the same logs directory as every other Berdaya Agent surface.

@@ -63,24 +63,42 @@ class TestUnifiedDashboardRouting:
         monkeypatch.setattr(main_mod, "_dashboard_listening", lambda host, port: False)
         execs = []
 
-        def fake_exec(exe, argv, env):
-            execs.append((exe, argv, env))
-            raise SystemExit(0)  # execvpe never returns
+        def fake_exec(argv, env):
+            execs.append((argv, env))
+            raise SystemExit(0)  # reexec never returns
 
-        monkeypatch.setattr(main_mod.os, "execvpe", fake_exec)
+        monkeypatch.setattr(main_mod, "_dashboard_reexec", fake_exec)
 
         with pytest.raises(SystemExit):
             main_mod.cmd_dashboard(_args())
 
         assert len(execs) == 1
-        exe, argv, env = execs[0]
-        assert exe == sys.executable
+        argv, env = execs[0]
+        assert argv[0] == sys.executable
         # Pinned to the default profile + launching profile preselected.
         assert "-p" in argv and argv[argv.index("-p") + 1] == "default"
         assert "--open-profile" in argv
         assert argv[argv.index("--open-profile") + 1] == "worker_x"
         # Profile HERMES_HOME dropped so the child binds the machine root.
         assert "HERMES_HOME" not in env
+
+    def test_profile_launch_reexec_uses_subprocess_on_windows(self, main_mod, monkeypatch):
+        monkeypatch.setattr(main_mod.sys, "platform", "win32")
+        runs = []
+        import subprocess
+        monkeypatch.setattr(
+            subprocess,
+            "run",
+            lambda argv, env: runs.append((argv, env)) or types.SimpleNamespace(returncode=0),
+        )
+        with pytest.raises(SystemExit) as exc:
+            main_mod._dashboard_reexec(
+                ["python.exe", "-m", "hermes_cli.main", "dashboard"],
+                {"PATH": "/x"},
+            )
+        assert exc.value.code == 0
+        assert len(runs) == 1
+        assert runs[0][0][0] == "python.exe"
 
     def test_isolated_flag_skips_routing(self, main_mod, monkeypatch):
         monkeypatch.setattr(
